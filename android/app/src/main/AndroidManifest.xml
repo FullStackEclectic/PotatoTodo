@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     
     <application
-        android:label="土豆ToDo"
+        android:label="土豆 Todo"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

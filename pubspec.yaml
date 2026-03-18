@@ -40,6 +40,7 @@ dependencies:
   
   # 本地数据库
   sqflite: ^2.3.2
+  sqflite_common_ffi: ^2.3.0 # For desktop database support
   path: ^1.9.0
   
   # Web 数据库支持
@@ -51,7 +52,7 @@ dependencies:
   # 本地通知
   flutter_local_notifications: ^19.3.1
   timezone: ^0.10.1
-  flutter_native_timezone: ^2.0.0
+  flutter_timezone: ^3.0.1 # Replaces flutter_native_timezone
   
   # 文件操作和分享
   path_provider: ^2.1.2
@@ -64,9 +65,15 @@ dependencies:
   fl_chart: ^0.70.2
   syncfusion_flutter_charts: ^29.1.37
   
-  # 音频播放
   audioplayers: ^5.2.1
   flutter_staggered_animations: ^1.1.1
+  google_fonts: ^6.2.1
+  
+  # 增强功能
+  flutter_markdown: ^0.7.1
+  device_calendar_plus: ^0.3.1
+  permission_handler: ^11.3.0 # Required for calendar permissions
+  quick_actions: ^1.0.7
 
 dev_dependencies:
   flutter_test:

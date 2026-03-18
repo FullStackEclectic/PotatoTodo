@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../themes/app_theme.dart';
 
 /// 四象限类型枚举
 enum QuadrantType {
@@ -42,13 +43,13 @@ class QuadrantConstants {
   static IconData getQuadrantIcon(QuadrantType type) {
     switch (type) {
       case QuadrantType.importantUrgent:
-        return Icons.whatshot;
+        return Icons.priority_high_rounded;
       case QuadrantType.importantNotUrgent:
-        return Icons.schedule;
+        return Icons.calendar_today_rounded;
       case QuadrantType.notImportantUrgent:
-        return Icons.bolt;
+        return Icons.notifications_active_rounded;
       case QuadrantType.notImportantNotUrgent:
-        return Icons.more_horiz;
+        return Icons.low_priority_rounded;
     }
   }
 
@@ -56,13 +57,13 @@ class QuadrantConstants {
   static Color getQuadrantColor(QuadrantType type) {
     switch (type) {
       case QuadrantType.importantUrgent:
-        return Colors.red;
+        return AppTheme.q1ImportantUrgent;
       case QuadrantType.importantNotUrgent:
-        return Colors.blue;
+        return AppTheme.q2ImportantNotUrgent;
       case QuadrantType.notImportantUrgent:
-        return Colors.amber;
+        return AppTheme.q3NotImportantUrgent;
       case QuadrantType.notImportantNotUrgent:
-        return Colors.green;
+        return AppTheme.q4NotImportantNotUrgent;
     }
   }
 } 

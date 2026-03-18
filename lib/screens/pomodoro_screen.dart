@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/pomodoro_provider.dart';
+import '../providers/gamification_provider.dart';
 import '../widgets/page_header_widget.dart';
 
 class PomodoroScreen extends StatefulWidget {
@@ -11,6 +12,34 @@ class PomodoroScreen extends StatefulWidget {
 }
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Hook up Gamification
+    final pomodoroProvider = Provider.of<PomodoroProvider>(context, listen: false);
+    final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
+    
+    pomodoroProvider.onWorkCompleteCallback = (minutes) {
+      gameProvider.onFocusSessionCompleted(minutes);
+      // Optional: Check mounted before using context across async gaps, though callback runs in sync with provider usually
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.star, color: Colors.yellow),
+                const SizedBox(width: 8),
+                Text('专注完成！获得 +$minutes XP'),
+              ],
+            ),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -262,4 +291,4 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         return '长休息';
     }
   }
-} 
+}

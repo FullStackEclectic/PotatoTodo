@@ -26,7 +26,7 @@ class ThemeUtil {
       backgroundColor: accentColor,
       foregroundColor: Colors.black,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
@@ -104,7 +104,7 @@ class ThemeUtil {
       backgroundColor: accentColorDark,
       foregroundColor: Colors.white,
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Colors.grey[850],
       elevation: 4,
       shape: RoundedRectangleBorder(

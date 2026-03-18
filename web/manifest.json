@@ -1,7 +1,6 @@
 {
-    "name": "土豆ToDo",
-    "short_name": "土豆ToDo",
-    "start_url": ".",
+    "name": "土豆 Todo",
+    "short_name": "土豆 Todo",    "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",

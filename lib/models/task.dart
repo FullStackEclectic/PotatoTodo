@@ -56,9 +56,9 @@ class Task {
       id: map['id'],
       title: map['title'],
       description: map['description'] ?? '',
-      isCompleted: map['isCompleted'] == 1,
-      isImportant: map['isImportant'] == 1,
-      isUrgent: map['isUrgent'] == 1,
+      isCompleted: map['isCompleted'] == 1 || map['isCompleted'] == true, // Support boolean from JSON
+      isImportant: map['isImportant'] == 1 || map['isImportant'] == true,
+      isUrgent: map['isUrgent'] == 1 || map['isUrgent'] == true,
       categoryId: map['categoryId'],
       dueDate: map['dueDate'] != null ? DateTime.parse(map['dueDate']) : null,
       createdAt: DateTime.parse(map['createdAt']),
@@ -66,11 +66,13 @@ class Task {
       reminderPriority: map['reminderPriority'] ?? 2,
       repeatFrequency: map['repeatFrequency'],
       repeatInterval: map['repeatInterval'],
-      isRepeating: map['isRepeating'] == 1,
+      isRepeating: map['isRepeating'] == 1 || map['isRepeating'] == true,
       parentTaskId: map['parentTaskId'],
       subTasks: [], // 子任务需要单独查询
     );
   }
+
+  factory Task.fromJson(Map<String, dynamic> json) => Task.fromMap(json);
 
   // 将Task对象转换为Map（用于数据库保存）
   Map<String, dynamic> toMap() {
@@ -91,6 +93,18 @@ class Task {
       'isRepeating': isRepeating ? 1 : 0,
       'parentTaskId': parentTaskId,
     };
+  }
+
+  Map<String, dynamic> toJson() {
+    // JSON needs booleans, Database needs 0/1 usually. 
+    // Let's stick to map format but ensure boolean compatibility if needed.
+    // Actually, for JSON export, proper booleans are nicer.
+    final map = toMap();
+    map['isCompleted'] = isCompleted;
+    map['isImportant'] = isImportant;
+    map['isUrgent'] = isUrgent;
+    map['isRepeating'] = isRepeating;
+    return map;
   }
 
   // 创建Task的副本

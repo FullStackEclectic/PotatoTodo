@@ -36,7 +36,7 @@ class TaskHeaderWidget extends StatelessWidget {
           const SizedBox(height: 12),
           
           // 筛选器区域 - 紧凑设计
-          _buildCompactFilters(theme),
+          TaskFilterBar(onFilterChanged: onFilterChanged),
         ],
       ),
     );
@@ -49,61 +49,33 @@ class TaskHeaderWidget extends StatelessWidget {
           // 左侧菜单按钮
           IconButton(
             onPressed: () {
-              // 使用GlobalKey打开抽屉
               if (scaffoldKey?.currentState != null) {
                 scaffoldKey!.currentState!.openDrawer();
               }
             },
-            icon: Icon(
-              Icons.menu,
-              size: 24,
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
-            ),
+            icon: Icon(Icons.menu, size: 24, color: theme.colorScheme.onSurface.withOpacity(0.8)),
             tooltip: '打开菜单',
-            style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(8),
-            ),
           ),
-          
           const SizedBox(width: 12),
-          
-          // 中间的紧凑统计信息
-          Expanded(
-            child: _buildCompactStats(theme),
-          ),
-          
+          Expanded(child: TaskStatsCard()),
           const SizedBox(width: 12),
-          
-          // 右侧搜索按钮
           IconButton(
-            onPressed: () {
-              // 触发搜索功能
-              onSearchToggle?.call();
-            },
-            icon: Icon(
-              Icons.search,
-              size: 20,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
+            onPressed: onSearchToggle,
+            icon: Icon(Icons.search, size: 20, color: theme.colorScheme.onSurface.withOpacity(0.7)),
             tooltip: '搜索任务',
-            style: IconButton.styleFrom(
-              backgroundColor: theme.colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(8),
-            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildModernStatsCard(ThemeData theme) {
+class TaskStatsCard extends StatelessWidget {
+  const TaskStatsCard({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         final tasks = taskProvider.tasks;
@@ -113,91 +85,24 @@ class TaskHeaderWidget extends StatelessWidget {
         final completionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100) : 0.0;
 
         return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primary.withOpacity(0.1),
-                theme.colorScheme.primary.withOpacity(0.05),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              width: 1,
-            ),
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2), width: 1),
           ),
-          padding: const EdgeInsets.all(16),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // 主要统计
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '任务统计',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$totalTasks 个任务',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // 分隔线
-              Container(
-                width: 1,
-                height: 40,
-                color: theme.colorScheme.outline.withOpacity(0.2),
-              ),
-              
-              // 详细统计
-              Expanded(
-                flex: 3,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatItem(
-                        theme,
-                        '已完成',
-                        completedTasks.toString(),
-                        Icons.check_circle,
-                        Colors.green,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildStatItem(
-                        theme,
-                        '待完成',
-                        pendingTasks.toString(),
-                        Icons.schedule,
-                        Colors.orange,
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildStatItem(
-                        theme,
-                        '完成率',
-                        '${completionRate.toStringAsFixed(0)}%',
-                        Icons.trending_up,
-                        Colors.blue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildCompactStatItem(theme, totalTasks.toString(), '总计', theme.colorScheme.primary),
+              Container(width: 1, height: 16, margin: const EdgeInsets.symmetric(horizontal: 8), color: theme.colorScheme.outline.withOpacity(0.3)),
+              _buildCompactStatItem(theme, completedTasks.toString(), '完成', Colors.green),
+              Container(width: 1, height: 16, margin: const EdgeInsets.symmetric(horizontal: 8), color: theme.colorScheme.outline.withOpacity(0.3)),
+              _buildCompactStatItem(theme, pendingTasks.toString(), '待办', Colors.orange),
+              if (totalTasks > 0) ...[
+                Container(width: 1, height: 16, margin: const EdgeInsets.symmetric(horizontal: 8), color: theme.colorScheme.outline.withOpacity(0.3)),
+                _buildCompactStatItem(theme, '${completionRate.toStringAsFixed(0)}%', '完成率', Colors.blue),
+              ],
             ],
           ),
         );
@@ -205,45 +110,24 @@ class TaskHeaderWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(ThemeData theme, String label, String value, IconData icon, Color color) {
+  Widget _buildCompactStatItem(ThemeData theme, String value, String label, Color color) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              value,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-            fontSize: 11,
-          ),
-        ),
+        Text(value, style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: color, fontSize: 12)),
+        Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 9)),
       ],
     );
   }
+}
 
-  Widget _buildCompactFilters(ThemeData theme) {
-    return Column(
-      children: [
-        // 合并的筛选行：全部 + 分类 + 状态筛选按钮
-        _buildMergedFilters(theme),
-      ],
-    );
-  }
+class TaskFilterBar extends StatelessWidget {
+  final VoidCallback? onFilterChanged;
+  const TaskFilterBar({Key? key, this.onFilterChanged}) : super(key: key);
 
-  Widget _buildMergedFilters(ThemeData theme) {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Consumer2<TaskProvider, CategoryProvider>(
       builder: (context, taskProvider, categoryProvider, child) {
         final categories = categoryProvider.topLevelCategories;
@@ -260,8 +144,8 @@ class TaskHeaderWidget extends StatelessWidget {
                       children: categories.map((category) {
                         final isSelected = taskProvider.selectedCategoryId == category.id;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _buildModernCategoryChip(theme, category, isSelected, taskProvider),
+                           padding: const EdgeInsets.only(right: 8),
+                           child: _buildModernCategoryChip(theme, category, isSelected, taskProvider),
                         );
                       }).toList(),
                     ),
@@ -277,6 +161,10 @@ class TaskHeaderWidget extends StatelessWidget {
       },
     );
   }
+
+
+
+
 
   Widget _buildStatusFilterButton(ThemeData theme, TaskProvider taskProvider) {
     // 确定当前状态筛选的文本和图标
@@ -318,33 +206,15 @@ class TaskHeaderWidget extends StatelessWidget {
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'all',
-          child: Row(
-            children: [
-              Icon(Icons.filter_list, size: 16, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 8),
-              const Text('全部'),
-            ],
-          ),
+          child: Row(children: [Icon(Icons.filter_list, size: 16), SizedBox(width: 8), Text('全部')]),
         ),
         PopupMenuItem(
           value: 'completed',
-          child: Row(
-            children: [
-              Icon(Icons.check_circle, size: 16, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 8),
-              const Text('已完成'),
-            ],
-          ),
+          child: Row(children: [Icon(Icons.check_circle, size: 16), SizedBox(width: 8), Text('已完成')]),
         ),
         PopupMenuItem(
           value: 'pending',
-          child: Row(
-            children: [
-              Icon(Icons.radio_button_unchecked, size: 16, color: theme.colorScheme.onSurface),
-              const SizedBox(width: 8),
-              const Text('未完成'),
-            ],
-          ),
+          child: Row(children: [Icon(Icons.radio_button_unchecked, size: 16), SizedBox(width: 8), Text('未完成')]),
         ),
       ],
       child: Container(
@@ -352,87 +222,15 @@ class TaskHeaderWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              statusIcon,
-              size: 14,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
+            Icon(statusIcon, size: 14, color: theme.colorScheme.onSurface.withOpacity(0.7)),
             const SizedBox(width: 4),
-            Text(
-              statusText,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(
-              Icons.arrow_drop_down,
-              size: 16,
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModernFilterChip(ThemeData theme, String label, IconData? icon, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected 
-            ? theme.colorScheme.primary 
-            : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected 
-              ? theme.colorScheme.primary 
-              : theme.colorScheme.outline.withOpacity(0.3),
-            width: 1,
-          ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ] : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected 
-                  ? Colors.white 
-                  : theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected 
-                  ? Colors.white 
-                  : theme.colorScheme.onSurface,
-              ),
-            ),
+            Text(statusText, style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface)),
+            const Icon(Icons.arrow_drop_down, size: 16),
           ],
         ),
       ),
@@ -452,154 +250,20 @@ class TaskHeaderWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected 
-            ? category.color 
-            : category.color.withOpacity(0.1),
+          color: isSelected ? category.color : category.color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: category.color.withOpacity(isSelected ? 1 : 0.3),
-            width: 1,
-          ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: category.color.withOpacity(0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ] : null,
+          border: Border.all(color: category.color.withOpacity(isSelected ? 1 : 0.3), width: 1),
+          boxShadow: isSelected ? [BoxShadow(color: category.color.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))] : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'),
-              size: 12,
-              color: isSelected ? Colors.white : category.color,
-            ),
+            Icon(IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'), size: 12, color: isSelected ? Colors.white : category.color),
             const SizedBox(width: 4),
-            Text(
-              category.name,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? Colors.white : category.color,
-              ),
-            ),
+            Text(category.name, style: TextStyle(fontSize: 11, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal, color: isSelected ? Colors.white : category.color)),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildCompactStats(ThemeData theme) {
-    return Consumer<TaskProvider>(
-      builder: (context, taskProvider, child) {
-        final tasks = taskProvider.tasks;
-        final totalTasks = tasks.length;
-        final completedTasks = tasks.where((task) => task.isCompleted).length;
-        final pendingTasks = totalTasks - completedTasks;
-        final completionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100) : 0.0;
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.primary.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 总任务数
-              _buildCompactStatItem(
-                theme,
-                totalTasks.toString(),
-                '总计',
-                theme.colorScheme.primary,
-              ),
-              
-              Container(
-                width: 1,
-                height: 16,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: theme.colorScheme.outline.withOpacity(0.3),
-              ),
-              
-              // 已完成
-              _buildCompactStatItem(
-                theme,
-                completedTasks.toString(),
-                '完成',
-                Colors.green,
-              ),
-              
-              Container(
-                width: 1,
-                height: 16,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                color: theme.colorScheme.outline.withOpacity(0.3),
-              ),
-              
-              // 待完成
-              _buildCompactStatItem(
-                theme,
-                pendingTasks.toString(),
-                '待办',
-                Colors.orange,
-              ),
-              
-              if (totalTasks > 0) ...[
-                Container(
-                  width: 1,
-                  height: 16,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                
-                // 完成率
-                _buildCompactStatItem(
-                  theme,
-                  '${completionRate.toStringAsFixed(0)}%',
-                  '完成率',
-                  Colors.blue,
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCompactStatItem(ThemeData theme, String value, String label, Color color) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-            fontSize: 12,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-            fontSize: 9,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _clearFilters(TaskProvider taskProvider) {
-    taskProvider.setSelectedCategory(null);
-    taskProvider.setSelectedQuadrant(null);
-    onFilterChanged?.call();
   }
 } 

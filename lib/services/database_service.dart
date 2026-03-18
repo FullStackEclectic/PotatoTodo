@@ -29,7 +29,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
     String path = await getDatabasesPath();
     return await openDatabase(
       join(path, 'potato_todo.db'),
-      version: 4,
+      version: 5,
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
@@ -50,9 +50,18 @@ class SQLiteDatabaseService implements DatabaseInterface {
       await db.execute('ALTER TABLE tasks ADD COLUMN updatedAt TEXT');
       await db.execute('ALTER TABLE tasks ADD COLUMN dueDate TEXT');
       await db.execute('ALTER TABLE tasks ADD COLUMN isRepeating INTEGER NOT NULL DEFAULT 0');
-      
-      // Remove old reminderTime column if it exists (rename to dueDate was the intention)
-      // Since SQLite doesn't support DROP COLUMN, we'll leave reminderTime for backward compatibility
+    }
+
+    if (oldVersion < 5) {
+      // Add missing columns for categories
+      try {
+        await db.execute('ALTER TABLE categories ADD COLUMN parentId INTEGER');
+        await db.execute('ALTER TABLE categories ADD COLUMN level INTEGER DEFAULT 0');
+        await db.execute('ALTER TABLE categories ADD COLUMN sortOrder INTEGER DEFAULT 0');
+      } catch (e) {
+        // Columns might already exist if we are recovering from a partial state, ignore
+        print('Error adding category columns: $e');
+      }
     }
   }
 
@@ -82,7 +91,10 @@ class SQLiteDatabaseService implements DatabaseInterface {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         color INTEGER NOT NULL,
-        iconCodePoint INTEGER NOT NULL
+        iconCodePoint INTEGER NOT NULL,
+        parentId INTEGER,
+        level INTEGER DEFAULT 0,
+        sortOrder INTEGER DEFAULT 0
       )
     ''');
   }
@@ -165,6 +177,22 @@ class SQLiteDatabaseService implements DatabaseInterface {
   }
 
   @override
+  Future<void> updateCategoryOrder(List<TaskCategory> reorderedCategories) async {
+    Database db = await database;
+    final batch = db.batch();
+    for (var i = 0; i < reorderedCategories.length; i++) {
+        final category = reorderedCategories[i];
+         batch.update(
+          'categories',
+          {'sortOrder': i},
+          where: 'id = ?',
+          whereArgs: [category.id],
+        );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  @override
   Future<int> deleteCategory(int id) async {
     Database db = await database;
     await db.update(
@@ -183,7 +211,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
   @override
   Future<List<TaskCategory>> getCategories() async {
     Database db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('categories');
+    final List<Map<String, dynamic>> maps = await db.query('categories', orderBy: 'sortOrder ASC, name ASC');
     return List.generate(maps.length, (i) => TaskCategory.fromMap(maps[i]));
   }
 
@@ -193,7 +221,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
     final List<Map<String, dynamic>> maps = await db.query(
       'categories',
       where: 'level = 0 OR level IS NULL',
-      orderBy: 'name ASC',
+      orderBy: 'sortOrder ASC, name ASC',
     );
     return List.generate(maps.length, (i) => TaskCategory.fromMap(maps[i]));
   }
@@ -205,7 +233,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
       'categories',
       where: 'parentId = ?',
       whereArgs: [parentId],
-      orderBy: 'name ASC',
+      orderBy: 'sortOrder ASC, name ASC',
     );
     return List.generate(maps.length, (i) => TaskCategory.fromMap(maps[i]));
   }

@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
+import '../providers/gamification_provider.dart';
 import '../widgets/task_item.dart';
 import '../widgets/task_header_widget.dart';
 import 'task_detail_screen.dart';
+import '../utils/platform_util.dart';
+import '../utils/slide_in_page_route.dart';
 
 class HomeScreen extends StatefulWidget {
   final GlobalKey<ScaffoldState>? scaffoldKey;
+  final bool isMasterDetail;
   
-  const HomeScreen({Key? key, this.scaffoldKey}) : super(key: key);
+  const HomeScreen({
+    Key? key, 
+    this.scaffoldKey,
+    this.isMasterDetail = false,
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,81 +42,142 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      body: Column(
-        children: [
-          // 搜索栏
-          if (_isSearchExpanded)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _searchTextController,
-                decoration: InputDecoration(
-                  hintText: '搜索任务...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchTextController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchTextController.clear();
-                            taskProvider.setSearchQuery(null);
-                          },
-                        )
-                      : null,
-                ),
-                onChanged: (value) {
-                  taskProvider.setSearchQuery(value.isEmpty ? null : value);
-                },
+      body: AnimationLimiter(
+        child: CustomScrollView(
+          slivers: [
+          // 1. Sliver App Bar
+          SliverAppBar(
+            backgroundColor: theme.colorScheme.background,
+            floating: true,
+            pinned: false,
+            snap: true,
+            centerTitle: false,
+            title: Text(
+              '土豆 Todo',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
               ),
             ),
-          
-          // 优雅的头部组件
-          TaskHeaderWidget(
-            scaffoldKey: widget.scaffoldKey,
-            onFilterChanged: () {
-              // 分类筛选变化时，只需要刷新界面，不需要切换搜索框
-              setState(() {});
-            },
-            onSearchToggle: () {
-              setState(() {
-                _isSearchExpanded = !_isSearchExpanded;
-                if (!_isSearchExpanded) {
-                  _searchTextController.clear();
-                  taskProvider.setSearchQuery(null);
+            leading: IconButton(
+              icon: Icon(Icons.menu, color: theme.colorScheme.onSurface),
+              onPressed: () {
+                if (widget.scaffoldKey?.currentState != null) {
+                  widget.scaffoldKey!.currentState!.openDrawer();
                 }
-              });
-            },
-            onDateFilter: () {
-              // TODO: 实现日期筛选
-            },
-            onStatusFilter: () {
-              // TODO: 实现状态筛选
-            },
-          ),
-          
-          // 任务列表
-          Expanded(
-            child: tasks.isEmpty
-                ? _buildEmptyState(theme)
-                : ListView.builder(
-                    itemCount: tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = tasks[index];
-                      return TaskItem(
-                        task: task,
-                        onTap: () => _openTaskDetail(task),
-                        onCompletedChanged: (completed) {
-                          taskProvider.toggleTaskCompletion(task);
-                        },
-                        onDeleteRequested: () {
-                          if (task.id != null) {
-                            taskProvider.deleteTask(task.id!);
-                          }
-                        },
-                      );
-                    },
+              },
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _isSearchExpanded ? Icons.close : Icons.search,
+                  color: theme.colorScheme.onSurface,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearchExpanded = !_isSearchExpanded;
+                    if (!_isSearchExpanded) {
+                      _searchTextController.clear();
+                      taskProvider.setSearchQuery(null);
+                    }
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
+            bottom: _isSearchExpanded 
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(60),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: TextField(
+                      controller: _searchTextController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: '搜索任务 (支持"重要", "今天")...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      ),
+                      onChanged: (value) => taskProvider.setSearchQuery(value.isEmpty ? null : value),
+                    ),
                   ),
+                )
+              : null,
           ),
+
+          // 2. Stats Card (Scrollable)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const TaskStatsCard(),
+            ),
+          ),
+
+          // 3. Sticky Filters
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SliverFilterHeaderDelegate(
+              child: Container(
+                color: theme.colorScheme.background, // Opaque background for sticky effect
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: TaskFilterBar(
+                  onFilterChanged: () => setState(() {}),
+                ),
+              ),
+              height: 56, // Estimate height
+            ),
+          ),
+
+          // 4. Task List
+          tasks.isEmpty
+            ? SliverFillRemaining(
+                child: _buildEmptyState(theme),
+              )
+            : SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final task = tasks[index];
+                    return AnimationConfiguration.staggeredList(
+                      position: index,
+                      duration: const Duration(milliseconds: 375),
+                      child: SlideAnimation(
+                        verticalOffset: 20.0, // Reduced offset for subtler animation
+                        child: FadeInAnimation(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4), // Add horizontal breathing room for the list
+                            child: TaskItem(
+                              task: task,
+                              onTap: () => _openTaskDetail(context, task),
+                              onCompletedChanged: (completed) {
+                                taskProvider.toggleTaskCompletion(task);
+                                if (completed) {
+                                  Provider.of<GamificationProvider>(context, listen: false).onTaskCompleted();
+                                }
+                              },
+                              onDeleteRequested: () {
+                                if (task.id != null) {
+                                  taskProvider.deleteTask(task.id!);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: tasks.length,
+                ),
+              ),
+              
+           const SliverPadding(padding: EdgeInsets.only(bottom: 100)), // More bottom padding for FAB
         ],
+      ),
       ),
     );
   }
@@ -118,30 +188,31 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
+              color: theme.colorScheme.primary.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.task_alt,
-              size: 48,
-              color: theme.colorScheme.primary,
+              Icons.check_circle_outline_rounded, // Cleaner icon
+              size: 80,
+              color: theme.colorScheme.primary.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text(
-            '暂无任务',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            '没有任务',
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '点击右下角的+按钮添加新任务',
+            '太棒了！或者... 点击 "+" 来点新挑战？',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
@@ -149,12 +220,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openTaskDetail(Task task) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TaskDetailScreen(task: task),
-      ),
-    );
+  void _openTaskDetail(BuildContext context, Task task) {
+    if (widget.isMasterDetail) {
+      // In master-detail view, just select the task (provider update will refresh detail view)
+      Provider.of<TaskProvider>(context, listen: false).setSelectedTask(task);
+    } else if (PlatformUtil.isDesktop) {
+      Navigator.push(
+        context,
+        SlideInPageRoute(page: TaskDetailScreen(task: task)),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TaskDetailScreen(task: task),
+        ),
+      );
+    }
   }
-} 
+}
+
+class _SliverFilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SliverFilterHeaderDelegate({required this.child, required this.height});
+
+  @override
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverFilterHeaderDelegate oldDelegate) {
+    return child != oldDelegate.child || height != oldDelegate.height;
+  }
+}

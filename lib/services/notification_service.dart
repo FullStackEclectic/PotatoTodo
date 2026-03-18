@@ -1,5 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter/services.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -29,7 +29,7 @@ class NotificationService {
       
       String resolvedTimeZone = 'UTC';
       try {
-        final detectedTimeZone = await FlutterNativeTimezone.getLocalTimezone();
+        final detectedTimeZone = await FlutterTimezone.getLocalTimezone();
         if (detectedTimeZone.isNotEmpty) {
           resolvedTimeZone = detectedTimeZone;
         }
@@ -77,6 +77,12 @@ class NotificationService {
             sound: true,
           );
       
+      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+          _flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      await androidImplementation?.requestNotificationsPermission();
+
       _isSupported = true;
     } catch (e) {
       debugPrint('[NotificationService] initialization failed: $e');
@@ -301,9 +307,4 @@ class NotificationService {
       debugPrint('[NotificationService] failed to cancel all notifications: $e');
     }
   }
-} 
-
-
-
-
-
+}

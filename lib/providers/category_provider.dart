@@ -273,4 +273,20 @@ class CategoryProvider with ChangeNotifier {
   List<TaskCategory> getSubCategoriesForSorting(int parentId) {
     return _categories.where((cat) => cat.parentId == parentId).toList();
   }
+
+  // --- Backup & Restore Helper Methods ---
+  
+  Future<void> importCategories(List<Map<String, dynamic>> categoriesJson) async {
+     // Assuming clearAllCategories called first (or we handle conflicts)
+     for (final json in categoriesJson) {
+       final category = TaskCategory.fromJson(json);
+       try {
+         await _db.insertCategory(category); 
+         _categories.add(category);
+       } catch (e) {
+         debugPrint('Error importing category ${category.id}: $e');
+       }
+     }
+     notifyListeners();
+  }
 } 

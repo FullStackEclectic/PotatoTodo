@@ -45,6 +45,9 @@ class TaskCategory {
     };
   }
 
+  Map<String, dynamic> toJson() => toMap();
+  factory TaskCategory.fromJson(Map<String, dynamic> json) => TaskCategory.fromMap(json);
+
   // 创建TaskCategory的副本
   TaskCategory copyWith({
     int? id,

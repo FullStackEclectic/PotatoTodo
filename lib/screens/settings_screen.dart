@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
-import '../widgets/page_header_widget.dart';
+import '../services/backup_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -17,25 +17,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     return Scaffold(
       backgroundColor: theme.colorScheme.background,
-      body: Column(
-        children: [
-          // 现代头部组件
-          PageHeaderWidget(
-            title: '设置',
-            subtitle: '个性化您的使用体验',
-            leading: Icon(
-              Icons.settings,
-              color: theme.colorScheme.primary,
-              size: 24,
-            ),
-          ),
-          
-          // 设置内容
-          Expanded(
-            child: _buildSettingsContent(theme),
-          ),
-        ],
+      appBar: AppBar(
+        title: const Text('设置'),
+        backgroundColor: theme.colorScheme.background,
+        elevation: 0,
       ),
+      body: _buildSettingsContent(theme),
     );
   }
 
@@ -65,6 +52,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildHapticSettings(theme),
               const SizedBox(height: 8),
               _buildStatusBarTest(theme),
+            ],
+          ),
+          
+          const SizedBox(height: 24),
+
+          // Data & Backup
+          _buildSettingsSection(
+            theme,
+            title: '数据与安全',
+            icon: Icons.security,
+            children: [
+              _buildDataSettings(theme),
             ],
           ),
           
@@ -222,6 +221,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildDataSettings(ThemeData theme) {
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(Icons.download_rounded, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+          title: const Text('导出数据'),
+          subtitle: Text('备份任务、分类和游戏化进度到文件', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+          onTap: () async {
+            await BackupService.exportData(context);
+          },
+        ),
+        ListTile(
+          leading: Icon(Icons.upload_file_rounded, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+          title: const Text('导入数据'),
+          subtitle: Text('从备份文件恢复数据 (将合并现有数据)', style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5))),
+          onTap: () async {
+             // Show confirmation dialog
+             final confirm = await showDialog<bool>(
+               context: context,
+               builder: (ctx) => AlertDialog(
+                 title: const Text('导入备份'),
+                 content: const Text('确定要导入数据吗？建议在导入前先导出当前数据以防万一。\n注意：导入过程将尝试保留现有数据，但若ID冲突可能会有意外覆盖。'),
+                 actions: [
+                   TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+                   TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('确定导入')),
+                 ],
+               ),
+             );
+             
+             if (confirm == true) {
+               await BackupService.importData(context);
+             }
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildAboutSettings(ThemeData theme) {
     return Column(
       children: [
@@ -292,4 +329,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ],
     );
   }
-} 
+}

@@ -1,225 +1,270 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // 主色调 - 参考滴答清单的蓝色系
-  static const Color primaryBlue = Color(0xFF2196F3);
-  static const Color primaryBlueLight = Color(0xFF64B5F6);
-  static const Color primaryBlueDark = Color(0xFF1976D2);
+  // Premium Color Palette
+  // Primary: Indigo/Slate for a professional, deep look
+  static const Color primaryLight = Color(0xFF6366F1); // Indigo 500
+  static const Color primaryDark = Color(0xFF818CF8); // Indigo 400
   
-  // 辅助色
-  static const Color accentOrange = Color(0xFFFF9800);
-  static const Color accentGreen = Color(0xFF4CAF50);
-  static const Color accentRed = Color(0xFFF44336);
-  static const Color accentPurple = Color(0xFF9C27B0);
-  static const Color accentTeal = Color(0xFF009688);
-  
-  // 中性色
-  static const Color neutral50 = Color(0xFFFAFAFA);
-  static const Color neutral100 = Color(0xFFF5F5F5);
-  static const Color neutral200 = Color(0xFFEEEEEE);
-  static const Color neutral300 = Color(0xFFE0E0E0);
-  static const Color neutral400 = Color(0xFFBDBDBD);
-  static const Color neutral500 = Color(0xFF9E9E9E);
-  static const Color neutral600 = Color(0xFF757575);
-  static const Color neutral700 = Color(0xFF616161);
-  static const Color neutral800 = Color(0xFF424242);
-  static const Color neutral900 = Color(0xFF212121);
-  
-  // 状态色
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFF44336);
-  static const Color info = Color(0xFF2196F3);
+  // Secondary: Coral/Salmon for warmth and call-to-actions
+  static const Color secondaryLight = Color(0xFFFF7F50);
+  static const Color secondaryDark = Color(0xFFFFAB91);
 
-  // 浅色主题
+  // Backgrounds: Soft, not stark white/black
+  static const Color backgroundLight = Color(0xFFF8FAFC); // Slate 50
+  static const Color surfaceLight = Colors.white;
+  static const Color backgroundDark = Color(0xFF0F172A); // Slate 900
+  static const Color surfaceDark = Color(0xFF1E293B); // Slate 800
+
+  // Text Colors
+  static const Color textPrimaryLight = Color(0xFF1E293B); // Slate 800
+  static const Color textSecondaryLight = Color(0xFF64748B); // Slate 500
+  static const Color textPrimaryDark = Color(0xFFF1F5F9); // Slate 100
+  static const Color textSecondaryDark = Color(0xFF94A3B8); // Slate 400
+
+  // Status Colors
+  static const Color error = Color(0xFFEF4444);
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+
+  // Quadrant Colors (Pastel/Soft)
+  static const Color q1ImportantUrgent = Color(0xFFFF6B6B);
+  static const Color q2ImportantNotUrgent = Color(0xFF4ECDC4);
+  static const Color q3NotImportantUrgent = Color(0xFFFFD93D);
+  static const Color q4NotImportantNotUrgent = Color(0xFF95A5A6);
+
+  static TextTheme _buildTextTheme(TextTheme base, Color primary, Color secondary) {
+    return GoogleFonts.plusJakartaSansTextTheme(base).copyWith(
+      displayLarge: GoogleFonts.plusJakartaSans(
+        color: primary,
+        fontWeight: FontWeight.w700,
+        fontSize: 32,
+        letterSpacing: -1.0,
+      ),
+      headlineMedium: GoogleFonts.plusJakartaSans(
+        color: primary,
+        fontWeight: FontWeight.w700,
+        fontSize: 24,
+        letterSpacing: -0.5,
+      ),
+      titleLarge: GoogleFonts.plusJakartaSans(
+        color: primary,
+        fontWeight: FontWeight.w600,
+        fontSize: 20,
+      ),
+      bodyLarge: GoogleFonts.inter(
+        color: primary,
+        fontSize: 16,
+        height: 1.5,
+      ),
+      bodyMedium: GoogleFonts.inter(
+        color: secondary,
+        fontSize: 14,
+        height: 1.5,
+      ),
+    );
+  }
+
   static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
+    final base = ThemeData.light(useMaterial3: true);
+    
+    return base.copyWith(
+      scaffoldBackgroundColor: backgroundLight,
       colorScheme: const ColorScheme.light(
-        primary: primaryBlue,
-        secondary: accentOrange,
-        surface: Colors.white,
-        background: Color(0xFFFAFAFA),
+        primary: primaryLight,
+        secondary: secondaryLight,
+        surface: surfaceLight,
+        background: backgroundLight,
         error: error,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: neutral900,
-        onBackground: neutral900,
+        onSurface: textPrimaryLight,
+        onBackground: textPrimaryLight,
         onError: Colors.white,
+        outline: Color(0xFFE2E8F0), // Slate 200
       ),
-      
-      // 应用栏主题
-      appBarTheme: const AppBarTheme(
+      textTheme: _buildTextTheme(
+        base.textTheme,
+        textPrimaryLight,
+        textSecondaryLight,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: backgroundLight,
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: neutral900,
-        titleTextStyle: TextStyle(
-          color: neutral900,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: textPrimaryLight),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: textPrimaryLight,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
         ),
       ),
-      
-      // 卡片主题
       cardTheme: CardThemeData(
-        elevation: 2,
+        color: surfaceLight,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFFF1F5F9), width: 1),
         ),
-        color: Colors.white,
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
-      
-      // 浮动操作按钮主题
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-        ),
-      ),
-      
-      // 底部导航栏主题
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
-        selectedItemColor: primaryBlue,
-        unselectedItemColor: neutral500,
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
-      ),
-      
-      // 输入框主题
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: neutral50,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: neutral300),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryBlue, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primaryLight, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        labelStyle: const TextStyle(color: textSecondaryLight),
       ),
-      
-      // 按钮主题
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          backgroundColor: primaryLight,
+          foregroundColor: Colors.white,
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
       ),
-      
-      // 芯片主题
-      chipTheme: ChipThemeData(
-        backgroundColor: neutral100,
-        selectedColor: primaryBlue,
-        labelStyle: const TextStyle(fontSize: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryLight,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        selectedItemColor: primaryLight,
+        unselectedItemColor: textSecondaryLight,
+        type: BottomNavigationBarType.fixed,
+        showUnselectedLabels: true,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+      ),
+      dividerTheme: const DividerThemeData(
+        space: 1,
+        thickness: 1,
+        color: Color(0xFFE2E8F0),
       ),
     );
   }
 
-  // 深色主题
   static ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
+    final base = ThemeData.dark(useMaterial3: true);
+    
+    return base.copyWith(
+      scaffoldBackgroundColor: backgroundDark,
       colorScheme: const ColorScheme.dark(
-        primary: primaryBlueLight,
-        secondary: accentOrange,
-        surface: Color(0xFF121212),
-        background: Color(0xFF0A0A0A),
-        error: Color(0xFFEF5350),
+        primary: primaryDark,
+        secondary: secondaryDark,
+        surface: surfaceDark,
+        background: backgroundDark,
+        error: error,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: Colors.white,
-        onBackground: Colors.white,
+        onSurface: textPrimaryDark,
+        onBackground: textPrimaryDark,
         onError: Colors.white,
+        outline: Color(0xFF334155), // Slate 700
       ),
-      
-      // 应用栏主题
-      appBarTheme: const AppBarTheme(
+      textTheme: _buildTextTheme(
+        base.textTheme,
+        textPrimaryDark,
+        textSecondaryDark,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: backgroundDark,
         elevation: 0,
-        backgroundColor: Color(0xFF121212),
-        foregroundColor: Colors.white,
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: textPrimaryDark),
+        titleTextStyle: GoogleFonts.plusJakartaSans(
+          color: textPrimaryDark,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
         ),
       ),
-      
-      // 卡片主题
       cardTheme: CardThemeData(
-        elevation: 2,
+        color: surfaceDark,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: Color(0xFF334155), width: 1),
         ),
-        color: const Color(0xFF1E1E1E),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       ),
-      
-      // 浮动操作按钮主题
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: primaryBlueLight,
-        foregroundColor: Colors.white,
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-        ),
-      ),
-      
-      // 底部导航栏主题
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Color(0xFF121212),
-        selectedItemColor: primaryBlueLight,
-        unselectedItemColor: Color(0xFF9E9E9E),
-        type: BottomNavigationBarType.fixed,
-        elevation: 8,
-      ),
-      
-      // 输入框主题
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E1E1E),
+        fillColor: surfaceDark,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF424242)),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryBlueLight, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: primaryDark, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        labelStyle: const TextStyle(color: textSecondaryDark),
       ),
-      
-      // 按钮主题
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          backgroundColor: primaryDark,
+          foregroundColor: Colors.white,
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
       ),
-      
-      // 芯片主题
-      chipTheme: ChipThemeData(
-        backgroundColor: const Color(0xFF2E2E2E),
-        selectedColor: primaryBlueLight,
-        labelStyle: const TextStyle(fontSize: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryDark,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: surfaceDark,
+        elevation: 0,
+        selectedItemColor: primaryDark,
+        unselectedItemColor: textSecondaryDark,
+        type: BottomNavigationBarType.fixed,
+        showUnselectedLabels: true,
+        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+      ),
+       dividerTheme: const DividerThemeData(
+        space: 1,
+        thickness: 1,
+        color: Color(0xFF334155),
       ),
     );
   }
-} 
+}
