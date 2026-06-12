@@ -269,11 +269,53 @@ class TaskProvider with ChangeNotifier {
   }
 
   Future<void> deleteTask(int id) async {
+    // Find all subtask IDs to cascade delete and cancel their notifications
+    final subTaskIds = _tasks
+        .where((task) => task.parentTaskId == id && task.id != null)
+        .map((task) => task.id!)
+        .toList();
+
+    for (final subId in subTaskIds) {
+      await _db.deleteTask(subId);
+      await _notificationService.cancelNotification(subId);
+    }
+
     await _db.deleteTask(id);
-    _tasks.removeWhere((task) => task.id == id);
+    _tasks.removeWhere((task) => task.id == id || task.parentTaskId == id);
     await _notificationService.cancelNotification(id);
-    if (_selectedTask?.id == id) {
+    
+    if (_selectedTask?.id == id || _selectedTask?.parentTaskId == id) {
       _selectedTask = null;
+    }
+    _publishChanges();
+  }
+
+  void removeCategoryFromTasks(int categoryId) {
+    _tasks = _tasks.map((task) {
+      if (task.categoryId == categoryId) {
+        return Task(
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          isCompleted: task.isCompleted,
+          isImportant: task.isImportant,
+          isUrgent: task.isUrgent,
+          categoryId: null, // Explicitly clear category references
+          dueDate: task.dueDate,
+          createdAt: task.createdAt,
+          updatedAt: task.updatedAt,
+          reminderPriority: task.reminderPriority,
+          repeatFrequency: task.repeatFrequency,
+          repeatInterval: task.repeatInterval,
+          isRepeating: task.isRepeating,
+          parentTaskId: task.parentTaskId,
+          subTasks: task.subTasks,
+        );
+      }
+      return task;
+    }).toList();
+    if (_selectedCategoryId == categoryId) {
+      _selectedCategoryId = null;
     }
     _publishChanges();
   }
@@ -284,8 +326,78 @@ class TaskProvider with ChangeNotifier {
   }
 
   Future<void> toggleTaskCompletion(Task task) async {
-    final updatedTask = task.copyWith(isCompleted: !task.isCompleted);
+    final wasCompleted = task.isCompleted;
+    final newCompleted = !wasCompleted;
+    final updatedTask = task.copyWith(isCompleted: newCompleted);
+    
     await updateTask(updatedTask);
+    
+    if (!wasCompleted && newCompleted && task.isRepeating) {
+      await _handleRepeatingTask(task);
+    }
+  }
+
+  Future<void> _handleRepeatingTask(Task task) async {
+    final now = DateTime.now();
+    final baseDate = task.dueDate ?? now;
+    final interval = task.repeatInterval ?? 1;
+    DateTime nextDueDate;
+
+    switch (task.repeatFrequency) {
+      case 'daily':
+        nextDueDate = baseDate.add(Duration(days: interval));
+        break;
+      case 'weekly':
+        nextDueDate = baseDate.add(Duration(days: interval * 7));
+        break;
+      case 'monthly':
+        int year = baseDate.year;
+        int month = baseDate.month + interval;
+        while (month > 12) {
+          year += 1;
+          month -= 12;
+        }
+        int day = baseDate.day;
+        final lastDayOfNextMonth = DateTime(year, month + 1, 0).day;
+        if (day > lastDayOfNextMonth) {
+          day = lastDayOfNextMonth;
+        }
+        nextDueDate = DateTime(year, month, day, baseDate.hour, baseDate.minute, baseDate.second);
+        break;
+      case 'yearly':
+        int year = baseDate.year + interval;
+        int month = baseDate.month;
+        int day = baseDate.day;
+        if (month == 2 && day == 29) {
+          final isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+          if (!isLeapYear) {
+            day = 28;
+          }
+        }
+        nextDueDate = DateTime(year, month, day, baseDate.hour, baseDate.minute, baseDate.second);
+        break;
+      default:
+        nextDueDate = baseDate.add(Duration(days: interval));
+        break;
+    }
+
+    final nextTask = Task(
+      title: task.title,
+      description: task.description,
+      isCompleted: false,
+      isImportant: task.isImportant,
+      isUrgent: task.isUrgent,
+      categoryId: task.categoryId,
+      dueDate: nextDueDate,
+      createdAt: now,
+      reminderPriority: task.reminderPriority,
+      repeatFrequency: task.repeatFrequency,
+      repeatInterval: task.repeatInterval,
+      isRepeating: true,
+      parentTaskId: task.parentTaskId,
+    );
+
+    await addTask(nextTask);
   }
 
   Future<void> setTaskImportance(Task task, bool isImportant) async {

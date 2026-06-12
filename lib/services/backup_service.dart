@@ -95,33 +95,13 @@ class BackupService {
       final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
       final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
 
+      // Clean existing data first to prevent duplicate entries and key conflicts
+      await taskProvider.clearAllTasks();
+      await categoryProvider.clearAllCategories(recreateDefaults: false);
+
       // Restore Categories
       if (data['categories'] != null) {
         final List<dynamic> cats = data['categories'];
-        // Clear existing? Or merge? 
-        // For simplicity: We should probably replace or merge carefully.
-        // Given SQLite IDs, replacing is safer if we wipe DB first, but that's risky.
-        // Let's iterate and add if not exists? Or just notify user this is a merge?
-        // Current safe approach: Import as new items or update if ID matches?
-        // Actually, simple "Overwrite" logic usually implies clearing old data.
-        // For now, let's just attempt to add them if they don't exist, but that's complex with IDs.
-        // Let's TRY to just upsert.
-        // Actually, providers might not expose full "Replace All" logic yet.
-        // Let's warn user: "This will merge data".
-        
-        // TODO: ideally we clear DB tables here via a clearAll method in providers.
-        // For now, let's implement a soft-restore that might duplicate if IDs changed.
-        // But IDs are preserved in JSON. If we write to DB with ID, it might conflict.
-        
-        // BETTER STRATEGY for MVP: Just Parse and Load into Memory for now, 
-        // Real implementation needs to clear DB or handle conflicts.
-        // Let's assume we can just add them for now, ignoring ID (let DB assign new ID) to avoid conflicts?
-        // No, restoring backup means restoring exact state usually.
-        
-        // Let's assume for this step, we just print "Restoring..." and leave the heavy DB logic for a specific method update if needed.
-        // Wait, I need to make it work.
-        
-        // Let's add `importFromJson` methods to Providers.
         await categoryProvider.importCategories(cats.cast<Map<String, dynamic>>());
       }
 

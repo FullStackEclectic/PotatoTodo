@@ -219,7 +219,7 @@ class CategoryProvider with ChangeNotifier {
   }
 
   // 清除所有分类（测试用）
-  Future<void> clearAllCategories() async {
+  Future<void> clearAllCategories({bool recreateDefaults = true}) async {
     try {
       for (final category in [..._categories]) {
         if (category.id != null) {
@@ -230,8 +230,10 @@ class CategoryProvider with ChangeNotifier {
       notifyListeners();
       debugPrint('所有分类已清除');
       
-      // 重新创建默认分类
-      await createDefaultCategories();
+      if (recreateDefaults) {
+        // 重新创建默认分类
+        await createDefaultCategories();
+      }
     } catch (e) {
       debugPrint('清除分类失败: $e');
       rethrow;
@@ -274,7 +276,7 @@ class CategoryProvider with ChangeNotifier {
     return _categories.where((cat) => cat.parentId == parentId).toList();
   }
 
-  // --- Backup & Restore Helper Methods ---
+
   
   Future<void> importCategories(List<Map<String, dynamic>> categoriesJson) async {
      // Assuming clearAllCategories called first (or we handle conflicts)

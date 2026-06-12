@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/haptic_service.dart';
 import '../services/haptic_service.dart';
 import '../services/sound_service.dart';
 
@@ -20,7 +20,7 @@ enum SessionType {
   longBreak,
 }
 
-class PomodoroProvider with ChangeNotifier {
+class PomodoroProvider with ChangeNotifier, WidgetsBindingObserver {
   // --- Settings ---
   int _workDuration = 25 * 60; // 25 minutes
   int _shortBreakDuration = 5 * 60; // 5 minutes
@@ -36,6 +36,7 @@ class PomodoroProvider with ChangeNotifier {
   int _remainingTime = 0; // in seconds
   int _currentPomodoroCount = 0; // Pomodoros completed in the current cycle
   Timer? _timer;
+  DateTime? _backgroundTime; // Track when the app goes to background
 
 
   // --- Getters ---
@@ -68,6 +69,7 @@ class PomodoroProvider with ChangeNotifier {
     _resetTimerInternal(notify: false); // Initialize with work session
     _initAudioPlayer();
     _loadSettings();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Future<void> _initAudioPlayer() async {
@@ -287,7 +289,32 @@ class PomodoroProvider with ChangeNotifier {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state, {DateTime? mockTime}) {
+    if (_currentState != PomodoroState.running) return;
+
+    final now = mockTime ?? DateTime.now();
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _backgroundTime = now;
+    } else if (state == AppLifecycleState.resumed && _backgroundTime != null) {
+      final elapsed = now.difference(_backgroundTime!).inSeconds;
+      _backgroundTime = null; // Reset
+
+      if (elapsed > 0) {
+        if (_remainingTime > elapsed) {
+          _remainingTime -= elapsed;
+          notifyListeners();
+        } else {
+          _remainingTime = 0;
+          _moveToNextSession();
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }

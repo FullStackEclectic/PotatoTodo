@@ -439,8 +439,15 @@ class _QuadrantViewScreenState extends State<QuadrantViewScreen> {
   }
 
   void _addNewTask(QuadrantType quadrantType) {
-    // TODO: 实现添加新任务功能
-    print('添加新任务到象限: $quadrantType');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(
+          task: null,
+          initialQuadrantType: quadrantType,
+        ),
+      ),
+    );
   }
 
   void _openTaskDetail(Task task) {

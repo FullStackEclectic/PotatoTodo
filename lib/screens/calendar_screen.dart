@@ -9,6 +9,7 @@ import '../models/task.dart';
 import '../themes/app_theme.dart';
 import '../utils/animations.dart';
 import '../constants/quadrant_constants.dart';
+import '../utils/platform_util.dart';
 import 'package:device_calendar_plus/device_calendar_plus.dart'; // Removed alias
 import 'package:permission_handler/permission_handler.dart';
 
@@ -26,29 +27,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDate = DateTime.now();
   CalendarViewMode _viewMode = CalendarViewMode.month;
   
-  // final DeviceCalendarPlugin _deviceCalendarPlugin = DeviceCalendarPlugin(); // TODO: Fix dependency
+  final DeviceCalendar _deviceCalendarPlugin = DeviceCalendar();
   List<Event> _systemEvents = []; 
   bool _hasCalendarPermission = false;
 
   @override
   void initState() {
     super.initState();
-    // _requestCalendarPermission(); 
+    if (PlatformUtil.isMobile) {
+      _requestCalendarPermission(); 
+    }
   }
 
   Future<void> _requestCalendarPermission() async {
-    // Temporarily disabled due to build errors with device_calendar_plus
-    /*
+    if (!PlatformUtil.isMobile) return;
     try {
-      var permissions = await _deviceCalendarPlugin.requestPermissions();
-      if (permissions.isSuccess && permissions.data!) {
+      final status = await _deviceCalendarPlugin.requestPermissions();
+      if (status == CalendarPermissionStatus.granted) {
         setState(() => _hasCalendarPermission = true);
         _fetchSystemEvents();
       } else {
-        var status = await Permission.calendarFullAccess.status;
-        if (!status.isGranted) {
-           status = await Permission.calendarFullAccess.request();
-           if (status.isGranted) {
+        var permStatus = await Permission.calendarFullAccess.status;
+        if (!permStatus.isGranted) {
+           permStatus = await Permission.calendarFullAccess.request();
+           if (permStatus.isGranted) {
               setState(() => _hasCalendarPermission = true);
               _fetchSystemEvents();
            }
@@ -57,40 +59,33 @@ class _CalendarScreenState extends State<CalendarScreen> {
     } catch (e) {
       debugPrint('Error requesting calendar permissions: $e');
     }
-    */
   }
 
   Future<void> _fetchSystemEvents() async {
-    // Temporarily disabled
-    /*
+    if (!PlatformUtil.isMobile) return;
     if (!_hasCalendarPermission) return;
     try {
-      final now = DateTime.now();
       final startDate = DateTime(_focusedDate.year, _focusedDate.month - 1, 1);
       final endDate = DateTime(_focusedDate.year, _focusedDate.month + 2, 0);
       
-      final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
-      if (calendarsResult.isSuccess && calendarsResult.data != null) {
-        List<Event> allEvents = [];
-        for (var cal in calendarsResult.data!) {
-           final eventsResult = await _deviceCalendarPlugin.retrieveEvents(
-             cal.id, 
-             RetrieveEventsParams(startDate: startDate, endDate: endDate)
-           );
-           if (eventsResult.isSuccess && eventsResult.data != null) {
-             allEvents.addAll(eventsResult.data!);
-           }
-        }
-        if (mounted) {
-          setState(() {
-            _systemEvents = allEvents;
-          });
-        }
+      final calendars = await _deviceCalendarPlugin.listCalendars();
+      List<Event> allEvents = [];
+      for (var cal in calendars) {
+        final events = await _deviceCalendarPlugin.listEvents(
+          startDate,
+          endDate,
+          calendarIds: [cal.id],
+        );
+        allEvents.addAll(events);
+      }
+      if (mounted) {
+        setState(() {
+          _systemEvents = allEvents;
+        });
       }
     } catch (e) {
       debugPrint('Error fetching system events: $e');
     }
-    */
   }
 
   @override

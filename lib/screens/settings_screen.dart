@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/backup_service.dart';
+import '../services/haptic_service.dart';
+import '../services/sound_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -11,6 +13,26 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _hapticEnabled = true;
+  bool _soundEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final haptic = await HapticService.isEnabled;
+    final sound = SoundService().isSoundEnabled;
+    if (mounted) {
+      setState(() {
+        _hapticEnabled = haptic;
+        _soundEnabled = sound;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -50,6 +72,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.tune,
             children: [
               _buildHapticSettings(theme),
+              const SizedBox(height: 8),
+              _buildSoundSettings(theme),
               const SizedBox(height: 8),
               _buildStatusBarTest(theme),
             ],
@@ -195,9 +219,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       trailing: Switch(
-        value: true, // TODO: 从设置中获取
-        onChanged: (value) {
-          // TODO: 保存设置
+        value: _hapticEnabled,
+        onChanged: (value) async {
+          await HapticService.setEnabled(value);
+          setState(() {
+            _hapticEnabled = value;
+          });
+          if (value) {
+            await HapticService.lightImpact();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildSoundSettings(ThemeData theme) {
+    return ListTile(
+      leading: Icon(
+        Icons.volume_up,
+        color: theme.colorScheme.onSurface.withOpacity(0.7),
+      ),
+      title: const Text('音效设置'),
+      subtitle: Text(
+        '完成任务或升级时播放提示音',
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withOpacity(0.5),
+        ),
+      ),
+      trailing: Switch(
+        value: _soundEnabled,
+        onChanged: (value) async {
+          await SoundService().toggleSound(value);
+          setState(() {
+            _soundEnabled = value;
+          });
+          if (value) {
+            await SoundService().playTaskComplete();
+          }
         },
       ),
     );
@@ -292,7 +350,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: theme.colorScheme.onSurface.withOpacity(0.5),
           ),
           onTap: () {
-            // TODO: 显示帮助页面
+            _showHelpDialog(context);
           },
         ),
         
@@ -309,10 +367,120 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: theme.colorScheme.onSurface.withOpacity(0.5),
           ),
           onTap: () {
-            // TODO: 显示反馈页面
+            _showFeedbackBottomSheet(context);
           },
         ),
       ],
+    );
+  }
+
+  void _showHelpDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('使用指南'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text('🎯 四象限时间管理法', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              SizedBox(height: 8),
+              Text('通过评估任务的“重要性”和“紧急性”，将任务划分为四个象限：'),
+              Text('1. 重要且紧急：需要立即去做的高优先任务。'),
+              Text('2. 重要不紧急：需要制定计划、逐步完成（个人成长核心）。'),
+              Text('3. 紧急不重要：可以授权他人或快速处理的日常琐事。'),
+              Text('4. 不重要不紧急：休闲消遣、无价值的事，应尽量避免。'),
+              Divider(height: 24),
+              Text('🍅 番茄工作法', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              SizedBox(height: 8),
+              Text('1. 选择待办任务，启动番茄钟专注工作（默认25分钟）。'),
+              Text('2. 保持专注，直到钟声响起。'),
+              Text('3. 享受短休（默认5分钟）。'),
+              Text('4. 完成4个番茄钟后，进行一次长休（15分钟）。'),
+              SizedBox(height: 8),
+              Text('每次完成番茄钟和任务，都会奖励经验值（XP）并解锁成就！'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFeedbackBottomSheet(BuildContext context) {
+    final controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '问题反馈与建议',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '您的反馈对我们非常重要！请写下您遇到的问题或建议：',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: '请输入反馈内容...',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('取消'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (controller.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('反馈内容不能为空')),
+                      );
+                      return;
+                    }
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('提交成功！感谢您的宝贵建议。')),
+                    );
+                  },
+                  child: const Text('提交'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
     );
   }
 

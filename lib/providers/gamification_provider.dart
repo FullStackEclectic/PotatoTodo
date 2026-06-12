@@ -9,10 +9,21 @@ class GamificationProvider with ChangeNotifier {
   int _level = 1;
   List<UserBadge> _badges = UserBadge.presets;
   
+  // Streak tracking variables
+  String? _lastMorningTaskDate;
+  int _consecutiveMorningDays = 0;
+  String? _lastCheckInDate;
+  int _consecutiveCheckInDays = 0;
+  
   // Getters
   int get xp => _xp;
   int get level => _level;
   List<UserBadge> get badges => _badges;
+  
+  String? get lastMorningTaskDate => _lastMorningTaskDate;
+  int get consecutiveMorningDays => _consecutiveMorningDays;
+  String? get lastCheckInDate => _lastCheckInDate;
+  int get consecutiveCheckInDays => _consecutiveCheckInDays;
   
   // Level Calculation: Level = sqrt(XP / 100) + 1 approx, or simplified steps
   // Level 1: 0-100 XP
@@ -39,9 +50,6 @@ class GamificationProvider with ChangeNotifier {
     // Load badges progress
     final badgesJson = prefs.getString('user_badges');
     if (badgesJson != null) {
-      // Logic to parse saved badge states
-      // Simple for now: just load progress map?
-      // Let's iterate and update progress
       final Map<String, dynamic> badgeMap = jsonDecode(badgesJson);
       _badges = _badges.map((b) {
         if (badgeMap.containsKey(b.id)) {
@@ -54,7 +62,14 @@ class GamificationProvider with ChangeNotifier {
         return b;
       }).toList();
     }
+
+    _lastMorningTaskDate = prefs.getString('last_morning_task_date');
+    _consecutiveMorningDays = prefs.getInt('consecutive_morning_days') ?? 0;
+    _lastCheckInDate = prefs.getString('last_check_in_date');
+    _consecutiveCheckInDays = prefs.getInt('consecutive_check_in_days') ?? 0;
+
     notifyListeners();
+    await checkInDaily();
   }
 
   Future<void> _saveState() async {
@@ -70,26 +85,41 @@ class GamificationProvider with ChangeNotifier {
       };
     }
     await prefs.setString('user_badges', jsonEncode(badgeMap));
+
+    if (_lastMorningTaskDate != null) {
+      await prefs.setString('last_morning_task_date', _lastMorningTaskDate!);
+    } else {
+      await prefs.remove('last_morning_task_date');
+    }
+    await prefs.setInt('consecutive_morning_days', _consecutiveMorningDays);
+
+    if (_lastCheckInDate != null) {
+      await prefs.setString('last_check_in_date', _lastCheckInDate!);
+    } else {
+      await prefs.remove('last_check_in_date');
+    }
+    await prefs.setInt('consecutive_check_in_days', _consecutiveCheckInDays);
   }
 
-  void addXp(int amount) {
+  void addXp(int amount, {bool save = true}) {
     _xp += amount;
     // Check level up
     int nextLevelXp = _totalXpForLevel(_level + 1);
     while (_xp >= nextLevelXp) {
       _level++;
       nextLevelXp = _totalXpForLevel(_level + 1);
-      nextLevelXp = _totalXpForLevel(_level + 1);
       // Can trigger level up effect here or notify UI via listener
       SoundService().playLevelUp();
     }
     notifyListeners();
-    _saveState();
+    if (save) {
+      _saveState();
+    }
   }
 
   // --- Badge Logic ---
   
-  void updateBadgeProgress(BadgeType type, int amount) {
+  void updateBadgeProgress(BadgeType type, int amount, {bool save = true}) {
     bool dirty = false;
     _badges = _badges.map((b) {
       if (b.type == type && !b.isUnlocked) {
@@ -97,7 +127,7 @@ class GamificationProvider with ChangeNotifier {
         if (newProgress >= b.target) {
           // Unlock!
           b = b.copyWith(progress: b.target, unlockedAt: DateTime.now());
-          addXp(500); // Bonus XP for badge
+          addXp(500, save: false); // Bonus XP for badge
           dirty = true;
         } else {
           b = b.copyWith(progress: newProgress);
@@ -109,28 +139,93 @@ class GamificationProvider with ChangeNotifier {
     
     if (dirty) {
       notifyListeners();
-      _saveState();
+      if (save) {
+        _saveState();
+      }
     }
   }
 
+  void setBadgeProgress(BadgeType type, int value, {bool save = true}) {
+    bool dirty = false;
+    _badges = _badges.map((b) {
+      if (b.type == type && !b.isUnlocked) {
+        if (value >= b.target) {
+          // Unlock!
+          b = b.copyWith(progress: b.target, unlockedAt: DateTime.now());
+          addXp(500, save: false); // Bonus XP for badge
+          dirty = true;
+        } else {
+          b = b.copyWith(progress: value);
+          dirty = true;
+        }
+      }
+      return b;
+    }).toList();
+    
+    if (dirty) {
+      notifyListeners();
+      if (save) {
+        _saveState();
+      }
+    }
+  }
+
+  // Daily App Launch check-in hook
+  Future<void> checkInDaily({DateTime? mockTime}) async {
+    final now = mockTime ?? DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final todayStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+    final yesterdayStr = "${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}";
+
+    if (_lastCheckInDate == todayStr) {
+      // Already checked in today
+      return;
+    }
+
+    if (_lastCheckInDate == yesterdayStr) {
+      _consecutiveCheckInDays += 1;
+    } else {
+      _consecutiveCheckInDays = 1;
+    }
+    _lastCheckInDate = todayStr;
+
+    setBadgeProgress(BadgeType.streakFire, _consecutiveCheckInDays, save: false);
+    await _saveState();
+  }
+
   // Hook for completing a task
-  void onTaskCompleted() {
-    addXp(10); // 10 XP per task
+  void onTaskCompleted({DateTime? mockTime}) {
+    addXp(10, save: false); // 10 XP per task
     SoundService().playTaskComplete();
-    updateBadgeProgress(BadgeType.taskMachine, 1);
+    updateBadgeProgress(BadgeType.taskMachine, 1, save: false);
     
     // Check for early bird
-    final now = DateTime.now();
+    final now = mockTime ?? DateTime.now();
     if (now.hour < 8) {
-       // Logic for consecutive days is complex, simple increment for now
-       updateBadgeProgress(BadgeType.earlyBird, 1);
+      final today = DateTime(now.year, now.month, now.day);
+      final yesterday = today.subtract(const Duration(days: 1));
+      final todayStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+      final yesterdayStr = "${yesterday.year}-${yesterday.month.toString().padLeft(2, '0')}-${yesterday.day.toString().padLeft(2, '0')}";
+
+      if (_lastMorningTaskDate != todayStr) {
+        if (_lastMorningTaskDate == yesterdayStr) {
+          _consecutiveMorningDays += 1;
+        } else {
+          _consecutiveMorningDays = 1;
+        }
+        _lastMorningTaskDate = todayStr;
+        setBadgeProgress(BadgeType.earlyBird, _consecutiveMorningDays, save: false);
+      }
     }
+    _saveState();
   }
 
   // Hook for Pomodoro
   void onFocusSessionCompleted(int minutes) {
-    addXp(minutes); // 1 XP per minute
-    updateBadgeProgress(BadgeType.focusMaster, minutes);
+    addXp(minutes, save: false); // 1 XP per minute
+    updateBadgeProgress(BadgeType.focusMaster, minutes, save: false);
+    _saveState();
   }
 
   // --- Backup Support ---
@@ -149,6 +244,10 @@ class GamificationProvider with ChangeNotifier {
       'xp': _xp,
       'level': _level,
       'badges': badgeMap,
+      'last_morning_task_date': _lastMorningTaskDate,
+      'consecutive_morning_days': _consecutiveMorningDays,
+      'last_check_in_date': _lastCheckInDate,
+      'consecutive_check_in_days': _consecutiveCheckInDays,
     };
   }
 
@@ -169,6 +268,11 @@ class GamificationProvider with ChangeNotifier {
         return b;
       }).toList();
     }
+    
+    if (data.containsKey('last_morning_task_date')) _lastMorningTaskDate = data['last_morning_task_date'];
+    if (data.containsKey('consecutive_morning_days')) _consecutiveMorningDays = data['consecutive_morning_days'];
+    if (data.containsKey('last_check_in_date')) _lastCheckInDate = data['last_check_in_date'];
+    if (data.containsKey('consecutive_check_in_days')) _consecutiveCheckInDays = data['consecutive_check_in_days'];
     
     notifyListeners();
     _saveState();

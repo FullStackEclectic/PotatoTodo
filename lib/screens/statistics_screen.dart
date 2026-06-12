@@ -94,13 +94,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               child: StatsWidgets.buildInsightCard(
                                 context,
                                 title: '最佳工作日',
-                                value: bestDay.substring(0, 3), // Assuming Chinese days or just EN abbr. 'Mon' is OK but maybe better full Chinese? 
-                                // bestDay is 'Monday' etc. .substring(0,3) -> Mon. 
-                                // Let's keep it simple for now or map it?
-                                // Let's map it in _StatisticsScreenState but for now simple EN abbr is acceptable or I can do better.
-                                // Actually, bestDay comes from: days[bestDayIndex]. days = ['Monday'...]
-                                // I should translate days list too.
-                                subtitle: bestDay == 'N/A' ? '无数据' : '效率最高',
+                                value: bestDay, // Removed .substring(0, 3) to prevent RangeError crash on Chinese weekday strings
+                                subtitle: bestDay == 'N/A' || bestDay == '无数据' ? '无数据' : '效率最高',
                                 icon: Icons.bolt_rounded,
                                 color: theme.colorScheme.secondary,
                               ),

@@ -10,6 +10,8 @@ class SoundService {
   final AudioPlayer _player = AudioPlayer();
   bool _startEnabled = true;
 
+  bool get isSoundEnabled => _startEnabled;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _startEnabled = prefs.getBool('sound_enabled') ?? true;

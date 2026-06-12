@@ -43,6 +43,28 @@ void main() {
       expect(() async => await notificationService.scheduleTaskReminder(task), returnsNormally);
     });
 
+    test('scheduleTaskReminder cancels notification and returns normally for completed task', () async {
+      final task = Task(
+        id: 1,
+        title: 'Completed Test Task',
+        dueDate: DateTime.now().add(const Duration(hours: 1)),
+        isCompleted: true,
+      );
+
+      expect(() async => await notificationService.scheduleTaskReminder(task), returnsNormally);
+    });
+
+    test('scheduleTaskReminder cancels notification and returns normally for past dueDate', () async {
+      final task = Task(
+        id: 1,
+        title: 'Past Test Task',
+        dueDate: DateTime.now().subtract(const Duration(hours: 1)), // 1 hour ago
+        isCompleted: false,
+      );
+
+      expect(() async => await notificationService.scheduleTaskReminder(task), returnsNormally);
+    });
+
     test('cancelNotification handles valid id', () async {
       // Should not throw an exception
       expect(() async => await notificationService.cancelNotification(1), returnsNormally);

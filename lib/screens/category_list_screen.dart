@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/category.dart';
 import '../providers/category_provider.dart';
+import '../providers/task_provider.dart';
 import '../widgets/category_form.dart';
 
 class CategoryListScreen extends StatefulWidget {
@@ -148,7 +149,9 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
     
     if (confirmed == true && context.mounted) {
       if (category.id != null) {
+        final taskProvider = Provider.of<TaskProvider>(context, listen: false);
         await categoryProvider.deleteCategory(category.id!);
+        taskProvider.removeCategoryFromTasks(category.id!);
       }
     }
   }

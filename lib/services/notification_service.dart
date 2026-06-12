@@ -8,7 +8,7 @@ import '../models/task.dart';
 import '../utils/platform_util.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
+  static final NotificationService _instance = NotificationService.internal();
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
   bool _isSupported = false;
 
@@ -16,7 +16,8 @@ class NotificationService {
     return _instance;
   }
 
-  NotificationService._internal();
+  @visibleForTesting
+  NotificationService.internal();
 
   Future<void> initialize() async {
     if (PlatformUtil.isWeb) {
@@ -92,17 +93,34 @@ class NotificationService {
 
   // 设置任务提醒
   Future<void> scheduleTaskReminder(Task task) async {
-    if (!_isSupported || task.id == null || task.dueDate == null) {
+    if (!_isSupported || task.id == null) {
       return;
     }
 
     try {
-      // 取消可能已经存在的提醒
-      await cancelNotification(task.id!);
+      // 1. 如果任务已完成，直接取消通知提醒
+      if (task.isCompleted) {
+        await cancelNotification(task.id!);
+        return;
+      }
+
+      if (task.dueDate == null) {
+        return;
+      }
 
       // 获取本地时区
       final tz.TZDateTime scheduledDate =
           tz.TZDateTime.from(task.dueDate!, tz.local);
+
+      // 2. 避免调度过去的时间导致平台异常崩溃，清理旧通知后直接返回
+      final now = tz.TZDateTime.now(tz.local);
+      if (scheduledDate.isBefore(now)) {
+        await cancelNotification(task.id!);
+        return;
+      }
+
+      // 取消可能已经存在的提醒
+      await cancelNotification(task.id!);
 
       // 根据优先级定义通知详情
       NotificationDetails notificationDetails = _getNotificationDetailsByPriority(task.reminderPriority);

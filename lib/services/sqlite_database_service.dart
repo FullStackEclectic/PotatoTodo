@@ -24,6 +24,10 @@ class SQLiteDatabaseService implements DatabaseInterface {
     return await openDatabase(
       dbPath,
       version: 4,
+      onConfigure: (db) async {
+        debugPrint('[SQLiteDatabaseService] 开启外键约束支持');
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: (db, version) async {
         debugPrint('[SQLiteDatabaseService] 创建新数据库，版本: $version');
         await db.execute('''

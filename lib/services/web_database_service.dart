@@ -113,11 +113,17 @@ class WebDatabaseService implements DatabaseInterface {
       
       // 这里将Task转换为Map时，不包含id字段，因为我们使用autoIncrement
       Map<String, dynamic> taskMap = task.toMap();
+      final originalId = taskMap['id'];
       if (taskMap.containsKey('id')) {
         taskMap.remove('id');
       }
       
-      int id = await store.add(taskMap) as int;
+      int id;
+      if (originalId != null) {
+        id = await store.add(taskMap, originalId) as int;
+      } else {
+        id = await store.add(taskMap) as int;
+      }
       await txn.completed;
       return task.copyWith(id: id);
     } catch (e) {
@@ -263,12 +269,18 @@ class WebDatabaseService implements DatabaseInterface {
       
       // 这里将Category转换为Map时，不包含id字段，因为我们使用autoIncrement
       Map<String, dynamic> categoryMap = category.toMap();
+      final originalId = categoryMap['id'];
       if (categoryMap.containsKey('id')) {
         categoryMap.remove('id');
       }
       
       debugPrint('[WebDatabaseService] 分类Map数据: $categoryMap');
-      int id = await store.add(categoryMap) as int;
+      int id;
+      if (originalId != null) {
+        id = await store.add(categoryMap, originalId) as int;
+      } else {
+        id = await store.add(categoryMap) as int;
+      }
       debugPrint('[WebDatabaseService] 分类插入成功，ID: $id');
       await txn.completed;
       return category.copyWith(id: id);
