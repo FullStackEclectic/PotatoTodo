@@ -517,9 +517,6 @@ class TaskProvider with ChangeNotifier {
       case QuadrantType.notImportantNotUrgent:
         result = _tasks.where((task) => !task.isImportant && !task.isUrgent).toList();
         break;
-      default:
-        result = [];
-        break;
     }
     debugPrint('[TaskProvider] 获取象限 $quadrant 的任务，数量: ${result.length}');
     return result;

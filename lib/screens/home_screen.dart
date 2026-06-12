@@ -3,7 +3,6 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:provider/provider.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
-import '../providers/gamification_provider.dart';
 import '../widgets/task_item.dart';
 import '../widgets/task_header_widget.dart';
 import 'task_detail_screen.dart';

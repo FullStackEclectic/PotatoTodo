@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/pomodoro_provider.dart';
-import '../providers/gamification_provider.dart';
 import '../widgets/page_header_widget.dart';
 
 class PomodoroScreen extends StatefulWidget {

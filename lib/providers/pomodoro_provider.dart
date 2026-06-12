@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/haptic_service.dart';
@@ -35,7 +34,6 @@ class PomodoroProvider with ChangeNotifier, WidgetsBindingObserver {
   int _pomodorosPerLongBreak = 4; // Pomodoros before a long break
   bool _isSoundEnabled = true; // 音效开关
   bool _isVibrationEnabled = true; // 振动开关
-  bool _hasValidSoundFiles = false; // 是否有有效的音频文件
 
   // --- State ---
   PomodoroState _currentState = PomodoroState.stopped;
