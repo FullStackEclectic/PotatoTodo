@@ -196,12 +196,7 @@ class NotificationService {
       // Add other Android specific details if needed
     );
 
-    iosDetails = const DarwinNotificationDetails(
-        // Add iOS specific details if needed
-        // presentAlert: true,
-        // presentBadge: true,
-        // presentSound: true,
-        );
+    iosDetails = _getIOSNotificationDetailsByPriority(priority);
 
     return NotificationDetails(
       android: androidDetails,
@@ -244,7 +239,6 @@ class NotificationService {
     NotificationDetails notificationDetails
   ) async {
     try {
-      final repeatInterval = task.repeatInterval ?? 1;
       
       switch (task.repeatFrequency) {
         case 'daily':

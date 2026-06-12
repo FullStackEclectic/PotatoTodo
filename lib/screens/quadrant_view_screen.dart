@@ -47,12 +47,6 @@ class _QuadrantViewScreenState extends State<QuadrantViewScreen> {
   
   Widget _buildQuadrantGrid() {
     final taskProvider = Provider.of<TaskProvider>(context);
-    final quadrants = [
-      QuadrantType.importantUrgent,
-      QuadrantType.importantNotUrgent,
-      QuadrantType.notImportantUrgent,
-      QuadrantType.notImportantNotUrgent,
-    ];
     
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../models/category.dart';
 import '../providers/task_provider.dart';
@@ -223,9 +222,8 @@ class StatisticsService {
       for (int i = 0; i < 30; i++) {
         final date = thirtyDaysAgo.add(Duration(days: i));
         final dayTasks = categoryTasks.where((task) {
-          final taskDate = task.createdAt ?? task.updatedAt;
-          return taskDate != null && 
-                 taskDate.year == date.year &&
+          final taskDate = task.createdAt;
+          return taskDate.year == date.year &&
                  taskDate.month == date.month &&
                  taskDate.day == date.day;
         }).toList();

@@ -5,7 +5,6 @@ import 'utils/status_bar_util.dart';
 import 'utils/platform_util.dart';
 import 'screens/initialization_screen.dart';
 import 'screens/category_list_screen.dart';
-import 'screens/test_category_screen.dart';
 import 'screens/status_bar_test_screen.dart';
 import 'providers/task_provider.dart';
 import 'providers/category_provider.dart';
@@ -89,7 +88,6 @@ class MyApp extends StatelessWidget {
           home: const InitializationScreen(),
           routes: {
             '/category_list': (context) => const CategoryListScreen(),
-            '/test-category': (context) => const TestCategoryScreen(),
             '/status-bar-test': (context) => const StatusBarTestScreen(),
           },
           builder: (context, child) {

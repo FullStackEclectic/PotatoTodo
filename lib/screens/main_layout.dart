@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // 导入键盘服务
 import 'package:potato_todo/utils/platform_util.dart';
 import 'package:provider/provider.dart';
-import '../providers/theme_provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';
 import '../models/task.dart';
 import '../models/quadrant_type.dart';
 import 'home_screen.dart';
 import 'quadrant_view_screen.dart';
-import 'category_list_screen.dart';
 import 'settings_screen.dart';
 import 'statistics_screen.dart';
 import 'achievements_screen.dart';

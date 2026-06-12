@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/task.dart';
 import '../models/category.dart';
 import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';
-import '../providers/theme_provider.dart';
 
 class TaskHeaderWidget extends StatelessWidget {
   final VoidCallback? onFilterChanged;

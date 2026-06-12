@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:potato_todo/utils/platform_util.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
-import '../models/category.dart';
 import '../constants/quadrant_constants.dart';
 import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';

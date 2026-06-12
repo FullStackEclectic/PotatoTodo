@@ -118,47 +118,6 @@ class _CategoryFormState extends State<CategoryForm> {
       debugPrint('[CategoryForm] 表单验证失败');
     }
   }
-  
-  // 显示颜色选择器
-  void _showColorPicker() {
-    // ... (颜色选择器逻辑不变)
-  }
-  
-  // 显示图标选择器
-  void _showIconPicker() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('选择图标'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: GridView.builder(
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 5,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-            ),
-            itemCount: _availableIcons.length,
-            itemBuilder: (context, index) {
-              final iconData = _availableIcons[index];
-              return IconButton(
-                icon: Icon(iconData),
-                color: iconData.codePoint == _selectedIconCodePoint ? Theme.of(context).primaryColor : null,
-                onPressed: () {
-                  setState(() {
-                    _selectedIconCodePoint = iconData.codePoint;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-  
   @override
   Widget build(BuildContext context) {
     return Form(

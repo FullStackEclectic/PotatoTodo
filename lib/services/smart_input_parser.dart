@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import '../models/quadrant_type.dart';
-
 class ParsedTaskData {
   final String title;
   final DateTime? dueDate;

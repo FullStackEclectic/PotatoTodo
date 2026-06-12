@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:idb_shim/idb_browser.dart';
 import 'package:idb_shim/idb_shim.dart';
@@ -72,7 +71,7 @@ class WebDatabaseService implements DatabaseInterface {
           
           // 创建分类表 (如果不存在)
           if (!db.objectStoreNames.contains('categories')) {
-            ObjectStore categoryStore = db.createObjectStore(
+            db.createObjectStore(
               'categories',
               autoIncrement: true,
             );
@@ -244,7 +243,7 @@ class WebDatabaseService implements DatabaseInterface {
       
       return allTasks.where((task) {
         return task.title.toLowerCase().contains(lowercaseQuery) ||
-               (task.description?.toLowerCase().contains(lowercaseQuery) ?? false);
+               task.description.toLowerCase().contains(lowercaseQuery);
       }).toList();
     } catch (e) {
       debugPrint('搜索任务出错: $e');

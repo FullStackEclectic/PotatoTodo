@@ -1,6 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../themes/app_theme.dart';
 import '../constants/quadrant_constants.dart';
 
 class StatsWidgets {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:potato_todo/screens/category_list_screen.dart';
 import 'package:potato_todo/screens/settings_screen.dart';
 import 'package:potato_todo/screens/achievements_screen.dart';
 import 'category_panel.dart';

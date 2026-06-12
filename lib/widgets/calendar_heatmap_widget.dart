@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../themes/app_theme.dart';
 import '../models/task.dart';
 
 class CalendarHeatmapWidget extends StatelessWidget {
