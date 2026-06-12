@@ -363,41 +363,4 @@ class _TaskItemState extends State<TaskItem> {
       case QuadrantType.notImportantNotUrgent: return '日常';
     }
   }
-
-  // ... keep _buildSubTaskItem if needed but styled better ...
-  // Re-implementing subtask item for safety
-  Widget _buildSubTaskItem(ThemeData theme, Task subTask, TaskProvider taskProvider) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () async {
-              await taskProvider.toggleSubTaskCompletion(widget.task.id!, subTask);
-            },
-            child: Container(
-              width: 18, height: 18,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: subTask.isCompleted ? Colors.green : theme.colorScheme.outline.withOpacity(0.5),
-                  width: 1.5
-                ),
-                borderRadius: BorderRadius.circular(6),
-                color: subTask.isCompleted ? Colors.green : null,
-              ),
-              child: subTask.isCompleted ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            subTask.title,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              decoration: subTask.isCompleted ? TextDecoration.lineThrough : null,
-              color: subTask.isCompleted ? theme.colorScheme.onSurface.withOpacity(0.5) : theme.colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
