@@ -308,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                ),
              );
              
-             if (confirm == true) {
+             if (confirm == true && mounted) {
                await BackupService.importData(context);
              }
           },

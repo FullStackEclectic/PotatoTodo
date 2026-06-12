@@ -54,9 +54,11 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       _isSubmitting = true;
     });
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+
     try {
-      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-      
       final category = TaskCategory(
         id: widget.category?.id,
         name: _nameController.text.trim(),
@@ -74,11 +76,11 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       
       // 返回上一页
       if (mounted) {
-        Navigator.of(context).pop();
+        navigator.pop();
       }
     } catch (e) {
       // 显示错误信息
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('保存分类失败: $e')),
       );
     } finally {

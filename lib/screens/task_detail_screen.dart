@@ -425,21 +425,25 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   void _showDeleteDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('删除任务'),
         content: Text('确定要删除任务"${widget.task!.title}"吗？此操作无法撤销。'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('取消')),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
               final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+              Navigator.pop(dialogContext); // 关闭对话框
+
               await taskProvider.deleteTask(widget.task!.id!);
               if (mounted) {
                 if (!widget.isMasterDetailView) {
-                  Navigator.of(context).pop();
+                  navigator.pop(); // 返回上一页
                 }
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(content: Text('任务已删除'), backgroundColor: Colors.red),
                 );
               }

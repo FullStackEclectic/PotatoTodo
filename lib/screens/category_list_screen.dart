@@ -294,23 +294,20 @@ class _CategoryListScreenState extends State<CategoryListScreen> {
               icon: const Icon(Icons.check),
               onPressed: () async {
                 final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 try {
                   await categoryProvider.updateCategoryOrder(_reorderedCategories);
                   setState(() {
                     _isReordering = false;
                     _reorderedCategories.clear();
                   });
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('分类排序已保存')),
-                    );
-                  }
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('分类排序已保存')),
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('保存排序失败: $e')),
-                    );
-                  }
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(content: Text('保存排序失败: $e')),
+                  );
                 }
               },
               tooltip: '完成排序',
