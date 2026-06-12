@@ -595,12 +595,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                              ),
                              child: ListTile(
                                leading: const Icon(Icons.event, color: Colors.purple),
-                               title: Text(event.title ?? '无标题'),
+                               title: Text(event.title),
                                subtitle: Text(
-                                 // event.allDay == true 
-                                   // ? '全天' 
-                                   // : 
-                                   '${event.startDate?.hour}:${event.startDate?.minute.toString().padLeft(2,'0')} - ${event.endDate?.hour}:${event.endDate?.minute.toString().padLeft(2,'0')}'
+                                 '${event.startDate.hour}:${event.startDate.minute.toString().padLeft(2,'0')} - ${event.endDate.hour}:${event.endDate.minute.toString().padLeft(2,'0')}'
                                ),
                              ),
                            );
@@ -656,11 +653,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   
   List<Event> _getSystemEvents(List<Event> events, DateTime date) {
     return events.where((e) {
-      if (e.startDate == null) return false;
-      // Simple same day check considering Timezones? 
-      // device_calendar events usually have TZ info.
-      // e.startDate is DateTime.
-      return e.startDate!.year == date.year && e.startDate!.month == date.month && e.startDate!.day == date.day;
+      return e.startDate.year == date.year && e.startDate.month == date.month && e.startDate.day == date.day;
     }).toList();
   }
 }
