@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' show File;
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -10,8 +10,6 @@ import 'package:intl/intl.dart';
 import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/gamification_provider.dart';
-import '../models/task.dart';
-import '../models/category.dart';
 
 class BackupService {
   
@@ -20,9 +18,6 @@ class BackupService {
     final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
     final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
 
-    // Ensure all data is loaded
-    // taskProvider.allTasks should already be loaded if app is running
-    
     final Map<String, dynamic> backupData = {
       'version': 1,
       'timestamp': DateTime.now().toIso8601String(),
@@ -35,65 +30,90 @@ class BackupService {
   }
 
   static Future<void> exportData(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final jsonString = await createBackupJson(context);
-      
-      // Get temporary directory to save file
-      final directory = await getTemporaryDirectory();
+      final bytes = utf8.encode(jsonString);
       final nowStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final fileName = 'potato_todo_backup_$nowStr.json';
-      final file = File('${directory.path}/$fileName');
       
-      await file.writeAsString(jsonString);
+      final xfile = XFile.fromData(
+        bytes,
+        mimeType: 'application/json',
+        name: fileName,
+      );
       
-      // Share file - this works on Mobile to open share sheet (Save to Files, Email, etc.)
-      // On desktop, it might open a dialog.
-      await Share.shareXFiles([XFile(file.path)], text: 'Potato Todo Data Backup');
+      await Share.shareXFiles([xfile], text: 'Potato Todo Data Backup');
       
     } catch (e) {
       debugPrint('Export failed: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('导出失败: $e')),
       );
     }
   }
 
   static Future<void> importData(BuildContext context) async {
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+    final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
+    final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
 
-      if (result != null) {
-        File file = File(result.files.single.path!);
-        String jsonString = await file.readAsString();
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        String jsonString;
         
-        await restoreBackup(context, jsonString);
+        if (kIsWeb) {
+          final bytes = file.bytes;
+          if (bytes != null) {
+            jsonString = utf8.decode(bytes);
+          } else {
+            throw Exception('Failed to read backup file bytes');
+          }
+        } else {
+          final path = file.path;
+          if (path != null) {
+            final ioFile = File(path);
+            jsonString = await ioFile.readAsString();
+          } else if (file.bytes != null) {
+            jsonString = utf8.decode(file.bytes!);
+          } else {
+            throw Exception('File path and bytes are both unavailable');
+          }
+        }
         
-        ScaffoldMessenger.of(context).showSnackBar(
+        await restoreBackupWithProviders(taskProvider, categoryProvider, gameProvider, jsonString);
+        
+        messenger.showSnackBar(
           const SnackBar(content: Text('数据恢复成功！请重启应用以确保所有状态刷新。')),
         );
       }
     } catch (e) {
       debugPrint('Import failed: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('导入失败: $e')),
       );
     }
   }
 
-  static Future<void> restoreBackup(BuildContext context, String jsonString) async {
+  static Future<void> restoreBackupWithProviders(
+    TaskProvider taskProvider,
+    CategoryProvider categoryProvider,
+    GamificationProvider gameProvider,
+    String jsonString,
+  ) async {
     try {
       final Map<String, dynamic> data = jsonDecode(jsonString);
       
       if (data['version'] != 1) {
         throw Exception('Unsupported backup version');
       }
-
-      final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-      final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
 
       // Clean existing data first to prevent duplicate entries and key conflicts
       await taskProvider.clearAllTasks();
