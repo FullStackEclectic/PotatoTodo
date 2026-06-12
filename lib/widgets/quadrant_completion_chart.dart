@@ -77,7 +77,7 @@ class QuadrantCompletionChart extends StatelessWidget {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

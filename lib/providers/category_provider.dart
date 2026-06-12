@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../models/category.dart';
 import '../services/database_interface.dart';
 import 'package:flutter/material.dart';

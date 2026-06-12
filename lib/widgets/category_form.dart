@@ -187,7 +187,7 @@ class _CategoryFormState extends State<CategoryForm> {
                                 Text(category.name),
                               ],
                             ),
-                          )).toList(),
+                          )),
                         ],
                         onChanged: (value) {
                           setState(() {

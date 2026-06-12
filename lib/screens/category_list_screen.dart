@@ -20,7 +20,7 @@ class CategoryListScreen extends StatefulWidget {
 }
 
 class _CategoryListScreenState extends State<CategoryListScreen> {
-  Set<int> _expandedCategories = {}; // 记录展开的分类ID
+  final Set<int> _expandedCategories = {}; // 记录展开的分类ID
   bool _isReordering = false; // 是否处于排序模式
   List<TaskCategory> _reorderedCategories = []; // 重新排序后的分类列表
 

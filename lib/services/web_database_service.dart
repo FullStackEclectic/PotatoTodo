@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:idb_shim/idb_browser.dart';
-import 'package:idb_shim/idb_shim.dart';
 import '../models/task.dart';
 import '../models/category.dart';
 import 'database_interface.dart';
@@ -127,7 +126,7 @@ class WebDatabaseService implements DatabaseInterface {
       return task.copyWith(id: id);
     } catch (e) {
       debugPrint('插入任务出错: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -145,7 +144,7 @@ class WebDatabaseService implements DatabaseInterface {
       await txn.completed;
     } catch (e) {
       debugPrint('更新任务出错: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -161,7 +160,7 @@ class WebDatabaseService implements DatabaseInterface {
       await txn.completed;
     } catch (e) {
       debugPrint('删除任务出错: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -306,7 +305,7 @@ class WebDatabaseService implements DatabaseInterface {
       await txn.completed;
     } catch (e) {
       debugPrint('更新分类出错: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -330,7 +329,7 @@ class WebDatabaseService implements DatabaseInterface {
       await txn.completed;
     } catch (e) {
       debugPrint('删除分类出错: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -459,6 +458,7 @@ class WebDatabaseService implements DatabaseInterface {
   }
 
   // 用于测试：清除所有分类数据
+  @override
   Future<void> clearCategoriesTable() async {
     debugPrint('[WebDatabaseService] 清除分类表');
     await initialize();

@@ -745,7 +745,7 @@ class __QuickAddTaskFormState extends State<_QuickAddTaskForm> {
                     onCategorySelected(category.id);
                     Navigator.pop(context);
                   },
-                )).toList(),
+                )),
                 ListTile(
                   leading: const Icon(Icons.clear),
                   title: const Text('无分类'),

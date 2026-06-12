@@ -79,7 +79,7 @@ class CategoryStatsScreen extends StatelessWidget {
           final stat = entry.value;
           
           return _buildCategoryStatCard(category, stat, indentLevel: 0);
-        }).toList(),
+        }),
         
         // 二级分类统计
         ...subLevelStats.entries.map((entry) {
@@ -87,7 +87,7 @@ class CategoryStatsScreen extends StatelessWidget {
           final stat = entry.value;
           
           return _buildCategoryStatCard(category, stat, indentLevel: 1);
-        }).toList(),
+        }),
       ],
     );
   }

@@ -203,6 +203,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
   }
 
   // 获取顶级分类
+  @override
   Future<List<TaskCategory>> getTopLevelCategories() async {
     debugPrint('[SQLiteDatabaseService] 获取顶级分类');
     final db = await database;
@@ -216,6 +217,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
   }
 
   // 获取子分类
+  @override
   Future<List<TaskCategory>> getSubCategories(int parentId) async {
     debugPrint('[SQLiteDatabaseService] 获取父分类ID为 $parentId 的子分类');
     final db = await database;
@@ -306,6 +308,7 @@ class SQLiteDatabaseService implements DatabaseInterface {
   }
 
   // 用于测试：清除所有分类数据
+  @override
   Future<void> clearCategoriesTable() async {
     debugPrint('[SQLiteDatabaseService] 清除分类表');
     try {

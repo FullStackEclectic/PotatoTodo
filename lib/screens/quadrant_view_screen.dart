@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/quadrant_type.dart';
 import '../models/task.dart';
 import '../providers/task_provider.dart';
 import '../widgets/task_item.dart';
@@ -33,7 +32,7 @@ class _QuadrantViewScreenState extends State<QuadrantViewScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    print('[QuadrantViewScreen] didChangeDependencies，选中象限: $_selectedQuadrant');
+    debugPrint('[QuadrantViewScreen] didChangeDependencies，选中象限: $_selectedQuadrant');
   }
 
   @override

@@ -209,7 +209,7 @@ class _TaskFormState extends State<TaskForm> {
                     value: category.id,
                     child: Text(category.name),
                   );
-                }).toList(),
+                }),
               ],
               onChanged: (value) {
                 setState(() {
@@ -243,7 +243,7 @@ class _TaskFormState extends State<TaskForm> {
             const SizedBox(height: 16),
             ListTile(
               title: const Text('提醒优先级'),
-              subtitle: Text('优先级 ${_reminderPriority}'),
+              subtitle: Text('优先级 $_reminderPriority'),
               trailing: DropdownButton<int>(
                 value: _reminderPriority,
                 items: const [
