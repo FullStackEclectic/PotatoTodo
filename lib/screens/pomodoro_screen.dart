@@ -49,7 +49,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // 现代头部组件

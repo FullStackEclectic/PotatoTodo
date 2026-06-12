@@ -108,7 +108,7 @@ class _CategoryFormState extends State<CategoryForm> {
           level: _categoryLevel,
         );
         
-        debugPrint('[CategoryForm] 新分类数据: name=${newCategory.name}, color=${newCategory.color.value}, iconCodePoint=${newCategory.iconCodePoint}');
+        debugPrint('[CategoryForm] 新分类数据: name=${newCategory.name}, color=${newCategory.color.toARGB32()}, iconCodePoint=${newCategory.iconCodePoint}');
         widget.onSave(newCategory);
       } catch (e) {
         debugPrint('[CategoryForm] 创建分类错误: $e');
@@ -225,7 +225,7 @@ class _CategoryFormState extends State<CategoryForm> {
             itemCount: _colors.length,
             itemBuilder: (context, index) {
               final color = _colors[index];
-              final isSelected = _selectedColor.value == color.value;
+              final isSelected = _selectedColor == color;
               
               return GestureDetector(
                 onTap: () {

@@ -95,7 +95,7 @@ class MyApp extends StatelessWidget {
             StatusBarUtil.setStatusBarForTheme(Theme.of(context));
             
             return MediaQuery(
-              data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0),
+              data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
               child: child!,
             );
           },

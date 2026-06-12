@@ -589,7 +589,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                            return Container(
                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                              decoration: BoxDecoration(
-                               color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                               color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
                                borderRadius: BorderRadius.circular(12),
                                border: Border.all(color: Colors.purple.withOpacity(0.3)),
                              ),
@@ -608,7 +608,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.background,
+                            color: theme.scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
                           ),

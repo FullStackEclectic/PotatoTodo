@@ -252,7 +252,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       builder: (context, categoryProvider, child) {
                         final categories = categoryProvider.categories;
                         return DropdownButtonFormField<int?>(
-                          value: _selectedCategoryId,
+                          initialValue: _selectedCategoryId,
                           decoration: InputDecoration(
                             labelText: '分类',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -279,7 +279,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<int>(
-                      value: _reminderPriority,
+                      initialValue: _reminderPriority,
                       decoration: InputDecoration(
                         labelText: '提醒',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -300,7 +300,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 children: [
                    Expanded(
                      child: DropdownButtonFormField<String?>(
-                       value: _repeatFrequency,
+                       initialValue: _repeatFrequency,
                        decoration: InputDecoration(
                          labelText: '重复',
                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

@@ -38,10 +38,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('设置'),
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: _buildSettingsContent(theme),

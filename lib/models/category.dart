@@ -37,7 +37,7 @@ class TaskCategory {
     return {
       if (id != null) 'id': id,
       'name': name,
-      'color': color.value,
+      'color': color.toARGB32(),
       'iconCodePoint': iconCodePoint,
       'parentId': parentId,
       'level': level,

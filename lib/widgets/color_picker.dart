@@ -7,12 +7,12 @@ class ColorPicker extends StatelessWidget {
   final double spacing;
 
   const ColorPicker({
-    Key? key,
+    super.key,
     required this.selectedColor,
     required this.onColorSelected,
     this.itemSize = 40,
     this.spacing = 10,
-  }) : super(key: key);
+  });
 
   // 预定义的颜色列表
   static const List<Color> colors = [
@@ -43,7 +43,7 @@ class ColorPicker extends StatelessWidget {
       spacing: spacing,
       runSpacing: spacing,
       children: colors.map((color) {
-        final isSelected = color.value == selectedColor.value;
+        final isSelected = color == selectedColor;
         return GestureDetector(
           onTap: () => onColorSelected(color),
           child: Container(

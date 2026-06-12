@@ -174,7 +174,7 @@ class AchievementsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isUnlocked ? badge.color.withOpacity(0.1) : theme.colorScheme.background,
+              color: isUnlocked ? badge.color.withOpacity(0.1) : theme.scaffoldBackgroundColor,
               shape: BoxShape.circle,
             ),
             child: Icon(

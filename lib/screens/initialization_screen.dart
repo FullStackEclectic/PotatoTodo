@@ -63,7 +63,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -90,7 +90,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
                 '土豆 Todo',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onBackground,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               
@@ -99,7 +99,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
               Text(
                 '高效的任务管理工具',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
               ),
               
@@ -123,7 +123,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
                 Text(
                   _initializationStatus,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.8),
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
                   ),
                 ),
               ] else ...[

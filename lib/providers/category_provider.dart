@@ -84,7 +84,7 @@ class CategoryProvider with ChangeNotifier {
   Future<void> addCategory(TaskCategory category) async {
     try {
       debugPrint('[CategoryProvider] 开始添加分类: ${category.name}');
-      debugPrint('[CategoryProvider] 分类数据: color=${category.color.value}, iconCodePoint=${category.iconCodePoint}');
+      debugPrint('[CategoryProvider] 分类数据: color=${category.color.toARGB32()}, iconCodePoint=${category.iconCodePoint}');
       
       // 验证字段是否合法
       if (category.name.isEmpty) {

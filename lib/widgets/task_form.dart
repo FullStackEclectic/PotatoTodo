@@ -194,7 +194,7 @@ class _TaskFormState extends State<TaskForm> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<int?>(
-              value: _selectedCategoryId,
+              initialValue: _selectedCategoryId,
               decoration: const InputDecoration(
                 labelText: '分类',
                 border: OutlineInputBorder(),

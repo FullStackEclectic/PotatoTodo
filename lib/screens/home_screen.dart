@@ -40,13 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final tasks = taskProvider.tasks;
     
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: AnimationLimiter(
         child: CustomScrollView(
           slivers: [
           // 1. Sliver App Bar
           SliverAppBar(
-            backgroundColor: theme.colorScheme.background,
+            backgroundColor: theme.scaffoldBackgroundColor,
             floating: true,
             pinned: false,
             snap: true,
@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             pinned: true,
             delegate: _SliverFilterHeaderDelegate(
               child: Container(
-                color: theme.colorScheme.background, // Opaque background for sticky effect
+                color: theme.scaffoldBackgroundColor, // Opaque background for sticky effect
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: TaskFilterBar(
                   onFilterChanged: () => setState(() {}),
