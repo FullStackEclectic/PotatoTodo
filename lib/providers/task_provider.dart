@@ -6,11 +6,17 @@ import '../models/quadrant_stats.dart';
 import '../services/database_interface.dart';
 import '../services/notification_service.dart';
 import '../constants/quadrant_constants.dart';
+import 'gamification_provider.dart';
 
 class TaskProvider with ChangeNotifier {
   final DatabaseInterface _db;
   final NotificationService _notificationService;
   final bool _shouldEnsureDatabase;
+  GamificationProvider? _gamificationProvider;
+  
+  set gamificationProvider(GamificationProvider? provider) {
+    _gamificationProvider = provider;
+  }
   
   List<Task> _tasks = [];
   String? _searchQuery;
@@ -332,8 +338,11 @@ class TaskProvider with ChangeNotifier {
     
     await updateTask(updatedTask);
     
-    if (!wasCompleted && newCompleted && task.isRepeating) {
-      await _handleRepeatingTask(task);
+    if (!wasCompleted && newCompleted) {
+      _gamificationProvider?.onTaskCompleted();
+      if (task.isRepeating) {
+        await _handleRepeatingTask(task);
+      }
     }
   }
 

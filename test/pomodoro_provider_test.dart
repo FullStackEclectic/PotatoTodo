@@ -2,13 +2,16 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:potato_todo/providers/pomodoro_provider.dart';
+import 'package:potato_todo/providers/gamification_provider.dart';
+import 'package:potato_todo/services/sound_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('PomodoroProvider - Basic Controls', () {
-    setUp(() {
+    setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      await SoundService().toggleSound(false);
     });
 
     test('Initial state should be work and stopped', () {
@@ -41,8 +44,9 @@ void main() {
   });
 
   group('PomodoroProvider - Lifecycle Background Calibration', () {
-    setUp(() {
+    setUp(() async {
       SharedPreferences.setMockInitialValues({});
+      await SoundService().toggleSound(false);
     });
 
     test('Going to background when stopped should not calibrate elapsed time', () {
@@ -86,6 +90,20 @@ void main() {
       expect(provider.currentSession, SessionType.shortBreak);
       expect(provider.remainingTime, 5 * 60); // 5 minutes break reset
       expect(provider.currentState, PomodoroState.stopped);
+    });
+
+    test('When work session completes, it should automatically update gamificationProvider XP', () {
+      final gamification = GamificationProvider();
+      final pomodoro = PomodoroProvider();
+      pomodoro.gamificationProvider = gamification;
+      
+      expect(pomodoro.currentSession, SessionType.work);
+      final initialXp = gamification.xp;
+      
+      pomodoro.skipSession(); // completes work session
+      
+      // Focus session complete adds 25 XP (since workDuration is 25 minutes by default)
+      expect(gamification.xp, equals(initialXp + 25));
     });
   });
 }

@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/haptic_service.dart';
 import '../services/sound_service.dart';
+import 'gamification_provider.dart';
 
 // 定义番茄钟状态
 enum PomodoroState {
@@ -17,10 +18,16 @@ enum PomodoroState {
 enum SessionType {
   work,
   shortBreak,
-  longBreak,
+  longBreak;
 }
 
 class PomodoroProvider with ChangeNotifier, WidgetsBindingObserver {
+  GamificationProvider? _gamificationProvider;
+  
+  set gamificationProvider(GamificationProvider? provider) {
+    _gamificationProvider = provider;
+  }
+
   // --- Settings ---
   int _workDuration = 25 * 60; // 25 minutes
   int _shortBreakDuration = 5 * 60; // 5 minutes
@@ -167,6 +174,7 @@ class PomodoroProvider with ChangeNotifier, WidgetsBindingObserver {
     _vibrate();
 
     if (_currentSession == SessionType.work) {
+      _gamificationProvider?.onFocusSessionCompleted(_workDuration ~/ 60);
       if (onWorkCompleteCallback != null) {
         onWorkCompleteCallback!(_workDuration ~/ 60);
       }

@@ -7,8 +7,16 @@ class SoundService {
   factory SoundService() => _instance;
   SoundService._internal();
 
-  final AudioPlayer _player = AudioPlayer();
+  final Map<String, AudioPlayer> _players = {};
   bool _startEnabled = true;
+
+  static const List<String> _soundPaths = [
+    'sounds/complete.mp3',
+    'sounds/level_up.mp3',
+    'sounds/work_complete.mp3',
+    'sounds/break_start.mp3',
+    'sounds/work_start.mp3',
+  ];
 
   bool get isSoundEnabled => _startEnabled;
 
@@ -16,8 +24,17 @@ class SoundService {
     final prefs = await SharedPreferences.getInstance();
     _startEnabled = prefs.getBool('sound_enabled') ?? true;
     
-    // Set player mode to low latency for effects if possible
-    await _player.setReleaseMode(ReleaseMode.stop); 
+    // Preload audio players to minimize latency
+    for (final path in _soundPaths) {
+      try {
+        final player = AudioPlayer();
+        await player.setReleaseMode(ReleaseMode.stop);
+        await player.setSource(AssetSource(path));
+        _players[path] = player;
+      } catch (e) {
+        debugPrint('Error preloading sound $path: $e');
+      }
+    }
   }
 
   Future<void> toggleSound(bool enabled) async {
@@ -29,29 +46,29 @@ class SoundService {
   Future<void> _playSound(String assetPath) async {
     if (!_startEnabled) return;
     try {
-      await _player.stop(); // Stop potential previous sound
-      await _player.play(AssetSource(assetPath));
+      var player = _players[assetPath];
+      if (player == null) {
+        player = AudioPlayer();
+        await player.setReleaseMode(ReleaseMode.stop);
+        await player.setSource(AssetSource(assetPath));
+        _players[assetPath] = player;
+      }
+      await player.stop();
+      await player.resume();
     } catch (e) {
       debugPrint('Error playing sound $assetPath: $e');
     }
   }
 
   Future<void> playTaskComplete() async {
-    // Requires assets/sounds/complete.mp3
     await _playSound('sounds/complete.mp3');
   }
 
   Future<void> playLevelUp() async {
-    // Requires assets/sounds/level_up.mp3
     await _playSound('sounds/level_up.mp3');
   }
   
   Future<void> playPomodoroWorkComplete() async {
-    // We have work_start? Let's use it or assume complete exists or check dir.
-    // Based on user request "task complete ding" -> complete.mp3
-    // Pomodoro complete -> maybe 'sounds/work_complete.mp3'?
-    // I previously saw work_start.mp3. 
-    // Let's assume standard 'pomodoro_complete.mp3' or fallback to a default.
     await _playSound('sounds/work_complete.mp3');
   }
 

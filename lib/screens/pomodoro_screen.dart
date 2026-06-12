@@ -12,16 +12,15 @@ class PomodoroScreen extends StatefulWidget {
 }
 
 class _PomodoroScreenState extends State<PomodoroScreen> {
+  PomodoroProvider? _pomodoroProvider;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Hook up Gamification
-    final pomodoroProvider = Provider.of<PomodoroProvider>(context, listen: false);
-    final gameProvider = Provider.of<GamificationProvider>(context, listen: false);
+    // Hook up SnackBar callback
+    _pomodoroProvider = Provider.of<PomodoroProvider>(context, listen: false);
     
-    pomodoroProvider.onWorkCompleteCallback = (minutes) {
-      gameProvider.onFocusSessionCompleted(minutes);
-      // Optional: Check mounted before using context across async gaps, though callback runs in sync with provider usually
+    _pomodoroProvider!.onWorkCompleteCallback = (minutes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -38,6 +37,12 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         );
       }
     };
+  }
+
+  @override
+  void dispose() {
+    _pomodoroProvider?.onWorkCompleteCallback = null;
+    super.dispose();
   }
 
   @override

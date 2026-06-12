@@ -156,9 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               onTap: () => _openTaskDetail(context, task),
                               onCompletedChanged: (completed) {
                                 taskProvider.toggleTaskCompletion(task);
-                                if (completed) {
-                                  Provider.of<GamificationProvider>(context, listen: false).onTaskCompleted();
-                                }
                               },
                               onDeleteRequested: () {
                                 if (task.id != null) {

@@ -63,7 +63,6 @@ dependencies:
   flutter_slidable: ^3.0.1
   intl: ^0.20.2
   fl_chart: ^0.70.2
-  syncfusion_flutter_charts: ^29.1.37
   
   audioplayers: ^5.2.1
   flutter_staggered_animations: ^1.1.1

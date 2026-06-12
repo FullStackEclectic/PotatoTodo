@@ -49,17 +49,25 @@ void main() async {
           create: (_) => CategoryProvider(db),
         ),
         ChangeNotifierProvider(
+          create: (_) => GamificationProvider(),
+        ),
+        ChangeNotifierProxyProvider<GamificationProvider, TaskProvider>(
           create: (_) => TaskProvider(
             db,
             notificationService,
             ensureDatabaseInitialized: false,
           ),
+          update: (_, gamification, taskProvider) {
+            taskProvider!.gamificationProvider = gamification;
+            return taskProvider;
+          },
         ),
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<GamificationProvider, PomodoroProvider>(
           create: (_) => PomodoroProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => GamificationProvider(),
+          update: (_, gamification, pomodoroProvider) {
+            pomodoroProvider!.gamificationProvider = gamification;
+            return pomodoroProvider;
+          },
         ),
       ],
       child: const MyApp(),

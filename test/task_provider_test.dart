@@ -1,10 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:potato_todo/models/task.dart';
 import 'package:potato_todo/models/category.dart';
 import 'package:potato_todo/providers/task_provider.dart';
 import 'package:potato_todo/services/database_interface.dart';
 import 'package:potato_todo/services/notification_service.dart';
 import 'package:potato_todo/constants/quadrant_constants.dart';
+import 'package:potato_todo/providers/gamification_provider.dart';
+import 'package:potato_todo/services/sound_service.dart';
 
 // Mock database service for testing
 class MockDatabaseService implements DatabaseInterface {
@@ -115,15 +118,19 @@ class MockNotificationService extends NotificationService {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('TaskProvider Bug Fixes', () {
     late TaskProvider taskProvider;
     late MockDatabaseService mockDb;
     late MockNotificationService mockNotification;
 
-    setUp(() {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
       mockDb = MockDatabaseService();
       mockNotification = MockNotificationService();
       taskProvider = TaskProvider(mockDb, mockNotification);
+      await SoundService().toggleSound(false);
     });
 
     test('getTasksByDateRange should include start and end dates', () async {
@@ -334,6 +341,20 @@ void main() {
       expect(spawnedTask.repeatFrequency, equals('daily'));
       expect(spawnedTask.repeatInterval, equals(2));
       expect(spawnedTask.dueDate, equals(DateTime(2026, 6, 14, 10, 0, 0))); // 12 + 2 = 14
+    });
+
+    test('toggleTaskCompletion from incomplete to completed should automatically award XP through GamificationProvider', () async {
+      final gamification = GamificationProvider();
+      taskProvider.gamificationProvider = gamification;
+      
+      final task = Task(title: 'XP Task', isCompleted: false);
+      await taskProvider.addTask(task);
+      final addedTask = taskProvider.allTasks.first;
+      
+      final initialXp = gamification.xp;
+      await taskProvider.toggleTaskCompletion(addedTask);
+      
+      expect(gamification.xp, equals(initialXp + 10)); // 10 XP awarded per completed task
     });
   });
 }
