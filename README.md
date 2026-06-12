@@ -42,19 +42,26 @@
    - 离线支持
    - 数据备份恢复
 
+5. **游戏化成长系统**
+   - 任务完成与专注获得 XP 经验值与等级提升
+   - 勋章成就体系（专注大师、打卡达人、早起鸟等）
+   - 连续天数（Streak）精确计算
+
 ## 🛠️ 技术栈
 
 - **Flutter** - 跨平台UI框架
 - **Provider** - 状态管理
-- **SQLite** - 本地数据库
-- **SharedPreferences** - 本地存储
-- **Flutter Local Notifications** - 本地通知
+- **SQLite / IndexedDB** - 跨平台本地数据库（包含原生与 Web 支持）
+- **SharedPreferences** - 本地轻量级存储
+- **Flutter Local Notifications** - 本地通知与时区提醒
+- **FL Chart** - 高颜值数据统计图表
+- **Audioplayers** - 零延迟特效提示音与专注音效
 
 ## 🚀 快速开始
 
 ### 环境要求
-- Flutter SDK: 3.0.0+
-- Dart SDK: 2.17.0+
+- Flutter SDK: 3.7.0+
+- Dart SDK: 3.0.0+
 - Android Studio / VS Code
 
 ### 安装步骤
