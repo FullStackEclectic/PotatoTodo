@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
             delegate: _SliverFilterHeaderDelegate(
               child: Container(
                 color: theme.scaffoldBackgroundColor, // Opaque background for sticky effect
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TaskFilterBar(
                   onFilterChanged: () => setState(() {}),
                 ),

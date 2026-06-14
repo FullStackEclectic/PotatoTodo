@@ -183,10 +183,232 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildMonthView(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 720;
+        if (isWide) {
+          // Calculate the height of the calendar card to determine layout strategy
+          final double leftWidth = constraints.maxWidth * 5 / 9; // flex 5 out of 9
+          final double cardWidth = leftWidth - 32; // 16 margin on each side
+          final double gridWidth = cardWidth - 16; // 8 padding on each side
+          final double cellWidth = gridWidth / 7;
+          final double cellHeight = 55.0; // Fixed cell height on wide screen
+          final double gridHeight = cellHeight * 6 + 16; // 8 padding on top/bottom
+          final double calendarCardHeight = gridHeight + 110; // 456px total card height with buffers
+          final double totalRequiredHeight = calendarCardHeight + 16 + 180; // Calendar card + spacing + bottom card min height
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left side: Calendar Grid & Efficiency Overview
+              Expanded(
+                flex: 5,
+                child: LayoutBuilder(
+                  builder: (context, viewportConstraints) {
+                    final double viewportHeight = viewportConstraints.maxHeight;
+                    
+                    if (viewportHeight >= totalRequiredHeight) {
+                      // Bounded height layout: stretches bottom card to fill remaining space
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: _buildCalendarCard(theme),
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(
+                            flex: 1,
+                            child: _buildEfficiencyOverviewCard(theme),
+                          ),
+                        ],
+                      );
+                    } else {
+                      // Unbounded height layout (short screen): scrolls vertically
+                      return SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildCalendarCard(theme),
+                            const SizedBox(height: 16),
+                            _buildEfficiencyOverviewCard(theme),
+                          ],
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Right side: Task List
+              Expanded(
+                flex: 4,
+                child: _buildSelectedDateTaskList(theme),
+              ),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              _buildCalendarCard(theme),
+              const SizedBox(height: 16),
+              Expanded(child: _buildSelectedDateTaskList(theme)),
+            ],
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildEfficiencyOverviewCard(ThemeData theme) {
+    return Consumer<TaskProvider>(
+      builder: (context, taskProvider, child) {
+        final tasks = taskProvider.allTasks;
+        final selectedMonthTasks = tasks.where((t) {
+          if (t.dueDate == null) return false;
+          return t.dueDate!.year == _focusedDate.year && t.dueDate!.month == _focusedDate.month;
+        }).toList();
+        
+        final completedMonthTasks = selectedMonthTasks.where((t) => t.isCompleted).toList();
+        final completedCount = completedMonthTasks.length;
+        final totalCount = selectedMonthTasks.length;
+        final completionRate = totalCount == 0 ? 0.0 : completedCount / totalCount;
+        
+        // Count by quadrant
+        final q1 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.importantUrgent).length;
+        final q2 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.importantNotUrgent).length;
+        final q3 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.notImportantUrgent).length;
+        final q4 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.notImportantNotUrgent).length;
+        
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_focusedDate.month}月 效率概览',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                // Progress Bar
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: completionRate,
+                          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${(completionRate * 100).toInt()}%',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '已完成 $completedCount / $totalCount 个任务',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatIndicator('重要且紧急', q1, AppTheme.q1ImportantUrgent, theme),
+                    _buildStatIndicator('重要不紧急', q2, AppTheme.q2ImportantNotUrgent, theme),
+                    _buildStatIndicator('紧急不重要', q3, AppTheme.q3NotImportantUrgent, theme),
+                    _buildStatIndicator('不重要不紧急', q4, AppTheme.q4NotImportantNotUrgent, theme),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatIndicator(String label, int count, Color color, ThemeData theme) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Calendar Grid
         Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$count',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 9,
+            color: theme.colorScheme.onSurface.withOpacity(0.5),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarCard(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double rawHeight = constraints.maxHeight;
+        final double cardHeight = rawHeight.isInfinite ? 420.0 : rawHeight;
+        final double cardWidth = constraints.maxWidth;
+        
+        // Headers + padding: 38 (weekday header) + 1 (divider) + 48 (nav) + 16 (bottom padding) = 103px.
+        // Let's add some padding: 105px total headers height.
+        const double headersHeight = 105.0;
+        const double gridVerticalPadding = 16.0;
+        const double gridHorizontalPadding = 16.0; // 8 left + 8 right
+        
+        final double availableGridHeight = cardHeight - headersHeight - gridVerticalPadding;
+        final double cellHeight = availableGridHeight / 6;
+        
+        final double availableGridWidth = cardWidth - gridHorizontalPadding;
+        final double cellWidth = availableGridWidth / 7;
+        
+        // Make sure cellHeight is at least 30px to avoid squishing
+        final double finalCellHeight = cellHeight.clamp(30.0, 120.0);
+        final double childAspectRatio = cellWidth / finalCellHeight;
+        final double gridHeight = finalCellHeight * 6 + gridVerticalPadding;
+
+        return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
@@ -205,40 +427,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
             children: [
               _buildWeekDaysHeader(theme),
               const Divider(height: 1),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calculate required height for 6 rows + padding
-                  // GridView padding is 8 top + 8 bottom = 16 vertical
-                  // CrossAxis count is 7
-                  const double gridVerticalPadding = 16.0;
-                  const double gridHorizontalPadding = 16.0; // 8 left + 8 right
-                  
-                  // content width available for headers
-                  final double availableWidth = constraints.maxWidth - gridHorizontalPadding;
-                  final double cellWidth = availableWidth / 7;
-                  
-                  // childAspectRatio is 1.0 so cellHeight = cellWidth
-                  final double requiredHeight = (cellWidth * 6) + gridVerticalPadding;
-
-                  return SizedBox(
-                    height: requiredHeight, 
-                    child: PageView.builder(
-                      controller: PageController(initialPage: _calculatePageIndex(_focusedDate)),
-                      onPageChanged: (index) {
-                         setState(() {
-                           _focusedDate = DateTime(_focusedDate.year, index % 12 + 1);
-                           // We need a more robust way to handle year changes in page view, 
-                           // but for simplicity in this refactor, we stick to basic month nav or simple manual nav.
-                           // Actually, let's just use manual arrows for safety and control.
-                         });
-                      },
-                      physics: const NeverScrollableScrollPhysics(), // Disable swipe for now to avoid complex date math issues
-                      itemBuilder: (context, index) {
-                        return _buildCalendarGrid(theme);
-                      },
-                    ),
-                  );
-                },
+              SizedBox(
+                height: gridHeight, 
+                child: PageView.builder(
+                  controller: PageController(initialPage: _calculatePageIndex(_focusedDate)),
+                  onPageChanged: (index) {
+                     setState(() {
+                       _focusedDate = DateTime(_focusedDate.year, index % 12 + 1);
+                     });
+                  },
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return _buildCalendarGrid(theme, childAspectRatio);
+                  },
+                ),
               ),
                // Navigation Buttons (Manual)
               Row(
@@ -248,7 +450,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     icon: const Icon(Icons.chevron_left_rounded),
                     onPressed: () {
                        setState(() => _focusedDate = DateTime(_focusedDate.year, _focusedDate.month - 1));
-                       _fetchSystemEvents(); // Refresh events for new month range
+                       _fetchSystemEvents();
                     },
                   ),
                   IconButton(
@@ -262,13 +464,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ],
           ),
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // Task List for Selected Date
-        Expanded(child: _buildSelectedDateTaskList(theme)),
-      ],
+        );
+      }
     );
   }
 
@@ -293,7 +490,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendarGrid(ThemeData theme) {
+  Widget _buildCalendarGrid(ThemeData theme, double childAspectRatio) {
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         final daysInMonth = DateTime(_focusedDate.year, _focusedDate.month + 1, 0).day;
@@ -302,9 +499,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
-            childAspectRatio: 1.0,
+            childAspectRatio: childAspectRatio,
           ),
           itemCount: 42, // Always show 6 rows
           itemBuilder: (context, index) {
