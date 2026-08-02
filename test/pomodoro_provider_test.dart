@@ -49,61 +49,106 @@ void main() {
       await SoundService().toggleSound(false);
     });
 
-    test('Going to background when stopped should not calibrate elapsed time', () {
-      final provider = PomodoroProvider();
-      final t1 = DateTime(2026, 6, 12, 10, 0, 0);
-      final t2 = DateTime(2026, 6, 12, 10, 10, 0); // 10 minutes later
+    test(
+      'Going to background when stopped should not calibrate elapsed time',
+      () {
+        final provider = PomodoroProvider();
+        final t1 = DateTime(2026, 6, 12, 10, 0, 0);
+        final t2 = DateTime(2026, 6, 12, 10, 10, 0); // 10 minutes later
 
-      provider.didChangeAppLifecycleState(AppLifecycleState.paused, mockTime: t1);
-      provider.didChangeAppLifecycleState(AppLifecycleState.resumed, mockTime: t2);
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.paused,
+          mockTime: t1,
+        );
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.resumed,
+          mockTime: t2,
+        );
 
-      expect(provider.remainingTime, 25 * 60); // Unchanged
-    });
+        expect(provider.remainingTime, 25 * 60); // Unchanged
+      },
+    );
 
-    test('Going to background when running should subtract elapsed seconds when resumed', () {
-      final provider = PomodoroProvider();
-      provider.startPauseTimer(); // starts, remaining is 25m (1500s)
+    test(
+      'Going to background when running should subtract elapsed seconds when resumed',
+      () {
+        final provider = PomodoroProvider();
+        provider.startPauseTimer(); // starts, remaining is 25m (1500s)
 
-      final t1 = DateTime(2026, 6, 12, 10, 0, 0);
-      final t2 = DateTime(2026, 6, 12, 10, 2, 30); // 2 minutes 30 seconds later (150s)
+        final t1 = DateTime(2026, 6, 12, 10, 0, 0);
+        final t2 = DateTime(
+          2026,
+          6,
+          12,
+          10,
+          2,
+          30,
+        ); // 2 minutes 30 seconds later (150s)
 
-      provider.didChangeAppLifecycleState(AppLifecycleState.paused, mockTime: t1);
-      provider.didChangeAppLifecycleState(AppLifecycleState.resumed, mockTime: t2);
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.paused,
+          mockTime: t1,
+        );
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.resumed,
+          mockTime: t2,
+        );
 
-      // Remaining should be 1500 - 150 = 1350
-      expect(provider.remainingTime, 1350);
-      expect(provider.currentState, PomodoroState.running);
-    });
+        // Remaining should be 1500 - 150 = 1350
+        expect(provider.remainingTime, 1350);
+        expect(provider.currentState, PomodoroState.running);
+      },
+    );
 
-    test('If background elapsed time exceeds remaining work duration, session should advance', () {
-      final provider = PomodoroProvider();
-      provider.startPauseTimer(); // remaining is 25m
+    test(
+      'If background elapsed time exceeds remaining work duration, session should advance',
+      () {
+        final provider = PomodoroProvider();
+        provider.startPauseTimer(); // remaining is 25m
 
-      final t1 = DateTime(2026, 6, 12, 10, 0, 0);
-      final t2 = DateTime(2026, 6, 12, 10, 30, 0); // 30 minutes later (longer than 25m work duration)
+        final t1 = DateTime(2026, 6, 12, 10, 0, 0);
+        final t2 = DateTime(
+          2026,
+          6,
+          12,
+          10,
+          30,
+          0,
+        ); // 30 minutes later (longer than 25m work duration)
 
-      provider.didChangeAppLifecycleState(AppLifecycleState.paused, mockTime: t1);
-      provider.didChangeAppLifecycleState(AppLifecycleState.resumed, mockTime: t2);
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.paused,
+          mockTime: t1,
+        );
+        provider.didChangeAppLifecycleState(
+          AppLifecycleState.resumed,
+          mockTime: t2,
+        );
 
-      // Should complete work session, increment Pomodoro count, transition to shortBreak, and reset time
-      expect(provider.currentPomodoroCount, 1);
-      expect(provider.currentSession, SessionType.shortBreak);
-      expect(provider.remainingTime, 5 * 60); // 5 minutes break reset
-      expect(provider.currentState, PomodoroState.stopped);
-    });
+        // The timer was running in the background, so it continues through the
+        // completed work and break sessions instead of stopping after one.
+        expect(provider.currentPomodoroCount, 1);
+        expect(provider.currentSession, SessionType.work);
+        expect(provider.remainingTime, 25 * 60);
+        expect(provider.currentState, PomodoroState.running);
+      },
+    );
 
-    test('When work session completes, it should automatically update gamificationProvider XP', () {
-      final gamification = GamificationProvider();
-      final pomodoro = PomodoroProvider();
-      pomodoro.gamificationProvider = gamification;
-      
-      expect(pomodoro.currentSession, SessionType.work);
-      final initialXp = gamification.xp;
-      
-      pomodoro.skipSession(); // completes work session
-      
-      // Focus session complete adds 25 XP (since workDuration is 25 minutes by default)
-      expect(gamification.xp, equals(initialXp + 25));
-    });
+    test(
+      'When work session completes, it should automatically update gamificationProvider XP',
+      () {
+        final gamification = GamificationProvider();
+        final pomodoro = PomodoroProvider();
+        pomodoro.gamificationProvider = gamification;
+
+        expect(pomodoro.currentSession, SessionType.work);
+        final initialXp = gamification.xp;
+
+        pomodoro.skipSession(); // completes work session
+
+        // Focus session complete adds 25 XP (since workDuration is 25 minutes by default)
+        expect(gamification.xp, equals(initialXp + 25));
+      },
+    );
   });
 }

@@ -70,4 +70,4 @@ class ResponsiveUtil {
     if (isTablet(context)) return screenWidth * 0.5;
     return screenWidth * 0.3;
   }
-} 
+}

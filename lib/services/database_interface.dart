@@ -12,6 +12,8 @@ abstract class DatabaseInterface {
   Future<void> deleteTask(int id);
   Future<List<Task>> getTasksByCategory(int categoryId);
   Future<List<Task>> searchTasks(String query);
+  Future<bool> isTaskDataInitialized();
+  Future<void> markTaskDataInitialized();
 
   // 分类相关操作
   Future<List<TaskCategory>> getCategories();
@@ -21,7 +23,6 @@ abstract class DatabaseInterface {
   Future<void> updateCategory(TaskCategory category);
   Future<void> deleteCategory(int id);
   Future<void> updateCategoryOrder(List<TaskCategory> reorderedCategories);
-  
-  // 测试用工具方法
-  Future<void> clearCategoriesTable();
-} 
+  Future<bool> isCategoryDataInitialized();
+  Future<void> markCategoryDataInitialized();
+}

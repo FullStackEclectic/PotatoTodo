@@ -60,8 +60,8 @@
 ## 🚀 快速开始
 
 ### 环境要求
-- Flutter SDK: 3.7.0+
-- Dart SDK: 3.0.0+
+- Flutter SDK: 3.44.8+ (stable)
+- Dart SDK: 3.12.2+ (bundled with Flutter)
 - Android Studio / VS Code
 
 ### 安装步骤

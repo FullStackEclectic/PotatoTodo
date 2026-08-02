@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';
+import '../providers/theme_provider.dart';
+import '../providers/pomodoro_provider.dart';
+import '../providers/gamification_provider.dart';
 import 'main_layout.dart';
 
 class InitializationScreen extends StatefulWidget {
-  const InitializationScreen({Key? key}) : super(key: key);
+  const InitializationScreen({super.key});
 
   @override
   State<InitializationScreen> createState() => _InitializationScreenState();
@@ -24,27 +27,44 @@ class _InitializationScreenState extends State<InitializationScreen> {
   Future<void> _initializeApp() async {
     try {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-      final categoryProvider = Provider.of<CategoryProvider>(context, listen: false);
-      
+      final categoryProvider = Provider.of<CategoryProvider>(
+        context,
+        listen: false,
+      );
+      final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+      final pomodoroProvider = Provider.of<PomodoroProvider>(
+        context,
+        listen: false,
+      );
+      final gamificationProvider = Provider.of<GamificationProvider>(
+        context,
+        listen: false,
+      );
+
       setState(() {
         _initializationStatus = 'Loading workspace data...';
       });
-      
+
       await Future.wait([
         taskProvider.initialize(),
         categoryProvider.initialize(),
+        themeProvider.initialization,
+        pomodoroProvider.initialization,
+        gamificationProvider.initialization,
       ]);
-      
+      if (!mounted) return;
+
       setState(() {
         _initializationStatus = 'Finalizing setup...';
       });
-      
+
       await Future.delayed(const Duration(milliseconds: 300));
-      
+      if (!mounted) return;
+
       setState(() {
         _isInitialized = true;
       });
-      
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainLayout()),
@@ -52,6 +72,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
       }
     } catch (e) {
       debugPrint('[InitializationScreen] initialization failed: $e');
+      if (!mounted) return;
       setState(() {
         _initializationStatus = 'Initialization failed: $e';
       });
@@ -61,7 +82,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
@@ -73,7 +94,7 @@ class _InitializationScreenState extends State<InitializationScreen> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: Icon(
@@ -82,9 +103,9 @@ class _InitializationScreenState extends State<InitializationScreen> {
                   color: theme.colorScheme.primary,
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // 应用名称
               Text(
                 '土豆 Todo',
@@ -93,18 +114,18 @@ class _InitializationScreenState extends State<InitializationScreen> {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               Text(
                 '高效的任务管理工具',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // 加载指示器
               if (!_isInitialized) ...[
                 SizedBox(
@@ -117,24 +138,20 @@ class _InitializationScreenState extends State<InitializationScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 Text(
                   _initializationStatus,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
                 ),
               ] else ...[
-                Icon(
-                  Icons.check_circle,
-                  size: 32,
-                  color: Colors.green,
-                ),
-                
+                Icon(Icons.check_circle, size: 32, color: Colors.green),
+
                 const SizedBox(height: 16),
-                
+
                 Text(
                   '初始化完成',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -150,4 +167,3 @@ class _InitializationScreenState extends State<InitializationScreen> {
     );
   }
 }
-

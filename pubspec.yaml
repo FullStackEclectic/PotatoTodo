@@ -50,29 +50,28 @@ dependencies:
   shared_preferences: ^2.2.2
   
   # 本地通知
-  flutter_local_notifications: ^19.3.1
-  timezone: ^0.10.1
-  flutter_timezone: ^3.0.1 # Replaces flutter_native_timezone
+  flutter_local_notifications: ^22.2.0
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0 # Replaces flutter_native_timezone
   
   # 文件操作和分享
-  path_provider: ^2.1.2
-  file_picker: ^10.0.0
-  share_plus: ^7.2.1
+  file_selector: ^1.1.0
+  share_plus: ^13.3.0
   
   # UI 组件
-  flutter_slidable: ^3.0.1
+  flutter_slidable: ^4.0.3
   intl: ^0.20.2
-  fl_chart: ^0.70.2
+  fl_chart: ^1.2.0
   
-  audioplayers: ^5.2.1
+  audioplayers: 6.8.1
   flutter_staggered_animations: ^1.1.1
-  google_fonts: ^6.2.1
+  google_fonts: ^8.2.1
   
   # 增强功能
-  flutter_markdown: ^0.7.1
-  device_calendar_plus: ^0.3.1
-  permission_handler: ^11.3.0 # Required for calendar permissions
+  device_calendar_plus: ^0.8.0
+  permission_handler: ^13.0.0 # Required for calendar permissions
   quick_actions: ^1.0.7
+  flutter_markdown_plus: ^1.0.12
 
 dev_dependencies:
   flutter_test:
@@ -83,7 +82,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -8,13 +8,13 @@ class IconPicker extends StatelessWidget {
   final double spacing;
 
   const IconPicker({
-    Key? key,
+    super.key,
     required this.selectedIcon,
     required this.onIconSelected,
     this.iconColor,
     this.iconSize = 30,
     this.spacing = 15,
-  }) : super(key: key);
+  });
 
   // 预定义常用图标列表
   static const List<IconData> icons = [
@@ -63,35 +63,42 @@ class IconPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = iconColor ?? Theme.of(context).primaryColor;
-    
+
     return SingleChildScrollView(
       child: Wrap(
         spacing: spacing,
         runSpacing: spacing,
-        children: icons.map((icon) {
-          final isSelected = icon.codePoint == selectedIcon.codePoint;
-          return GestureDetector(
-            onTap: () => onIconSelected(icon),
-            child: Container(
-              width: iconSize * 1.8,
-              height: iconSize * 1.8,
-              decoration: BoxDecoration(
-                color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? color : Colors.grey.withOpacity(0.3),
-                  width: 2,
+        children:
+            icons.map((icon) {
+              final isSelected = icon.codePoint == selectedIcon.codePoint;
+              return GestureDetector(
+                onTap: () => onIconSelected(icon),
+                child: Container(
+                  width: iconSize * 1.8,
+                  height: iconSize * 1.8,
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected
+                            ? color.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color:
+                          isSelected
+                              ? color
+                              : Colors.grey.withValues(alpha: 0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? color : Colors.grey,
+                    size: iconSize,
+                  ),
                 ),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? color : Colors.grey,
-                size: iconSize,
-              ),
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
-} 
+}

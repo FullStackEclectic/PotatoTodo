@@ -3,9 +3,9 @@ import '../themes/app_theme.dart';
 
 /// 四象限类型枚举
 enum QuadrantType {
-  importantUrgent,     // 重要且紧急 - 第一象限
-  importantNotUrgent,  // 重要不紧急 - 第二象限
-  notImportantUrgent,  // 紧急不重要 - 第三象限
+  importantUrgent, // 重要且紧急 - 第一象限
+  importantNotUrgent, // 重要不紧急 - 第二象限
+  notImportantUrgent, // 紧急不重要 - 第三象限
   notImportantNotUrgent, // 不重要不紧急 - 第四象限
 }
 
@@ -66,4 +66,4 @@ class QuadrantConstants {
         return AppTheme.q4NotImportantNotUrgent;
     }
   }
-} 
+}

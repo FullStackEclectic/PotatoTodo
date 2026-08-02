@@ -3,11 +3,12 @@ import 'package:provider/provider.dart';
 import '../models/category.dart';
 import '../providers/category_provider.dart';
 import '../providers/task_provider.dart';
+import '../constants/category_icons.dart';
 
 class CategoryPanel extends StatelessWidget {
   final bool isCollapsed;
 
-  const CategoryPanel({Key? key, this.isCollapsed = false}) : super(key: key);
+  const CategoryPanel({super.key, this.isCollapsed = false});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,9 @@ class CategoryPanel extends StatelessWidget {
                       '分类',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   if (!isCollapsed)
@@ -38,14 +41,23 @@ class CategoryPanel extends StatelessWidget {
                       tooltip: '新建分类',
                       onPressed: () {
                         if (Navigator.canPop(context)) Navigator.pop(context);
-                        Navigator.pushNamed(context, '/category_list', arguments: true);
+                        Navigator.pushNamed(
+                          context,
+                          '/category_list',
+                          arguments: true,
+                        );
                       },
                     ),
                 ],
               ),
             ),
             Expanded(
-              child: _buildCategoryList(context, categoryProvider, taskProvider, theme),
+              child: _buildCategoryList(
+                context,
+                categoryProvider,
+                taskProvider,
+                theme,
+              ),
             ),
           ],
         );
@@ -53,33 +65,45 @@ class CategoryPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryList(BuildContext context, CategoryProvider categoryProvider, TaskProvider taskProvider, ThemeData theme) {
+  Widget _buildCategoryList(
+    BuildContext context,
+    CategoryProvider categoryProvider,
+    TaskProvider taskProvider,
+    ThemeData theme,
+  ) {
     final categories = categoryProvider.categories;
     if (categories.isEmpty) {
-      return isCollapsed 
-        ? const SizedBox.shrink() 
-        : Center(child: Text('暂无分类', style: theme.textTheme.bodySmall));
+      return isCollapsed
+          ? const SizedBox.shrink()
+          : Center(child: Text('暂无分类', style: theme.textTheme.bodySmall));
     }
 
     return ListView(
       padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 0 : 8),
-      children: categoryProvider.topLevelCategories.map((category) {
-        return _buildCategoryTreeItem(context, category, categoryProvider, taskProvider, theme);
-      }).toList(),
+      children:
+          categoryProvider.topLevelCategories.map((category) {
+            return _buildCategoryTreeItem(
+              context,
+              category,
+              categoryProvider,
+              taskProvider,
+              theme,
+            );
+          }).toList(),
     );
   }
 
   Widget _buildCategoryTreeItem(
-    BuildContext context, 
-    TaskCategory category, 
-    CategoryProvider categoryProvider, 
-    TaskProvider taskProvider, 
-    ThemeData theme,
-    {int indentLevel = 0}
-  ) {
+    BuildContext context,
+    TaskCategory category,
+    CategoryProvider categoryProvider,
+    TaskProvider taskProvider,
+    ThemeData theme, {
+    int indentLevel = 0,
+  }) {
     final subCategories = categoryProvider.getSubCategories(category.id!);
     final isSelected = taskProvider.selectedCategoryId == category.id;
-    
+
     Widget item;
     if (isCollapsed) {
       item = Tooltip(
@@ -87,7 +111,10 @@ class CategoryPanel extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+            color:
+                isSelected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                    : Colors.transparent,
             shape: BoxShape.circle,
           ),
           child: Material(
@@ -101,8 +128,9 @@ class CategoryPanel extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Icon(
-                  IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'),
-                  color: isSelected ? theme.colorScheme.primary : category.color,
+                  CategoryIcons.fromCodePoint(category.iconCodePoint),
+                  color:
+                      isSelected ? theme.colorScheme.primary : category.color,
                   size: 24,
                 ),
               ),
@@ -112,7 +140,10 @@ class CategoryPanel extends StatelessWidget {
       );
     } else {
       item = Material(
-        color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+        color:
+            isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: () {
@@ -124,32 +155,45 @@ class CategoryPanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                if(isSelected)
+                if (isSelected)
                   Container(
                     width: 4,
                     height: 16,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(2)
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                if(isSelected) const SizedBox(width: 6),
-                Icon(IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'), color: category.color, size: 18),
+                if (isSelected) const SizedBox(width: 6),
+                Icon(
+                  CategoryIcons.fromCodePoint(category.iconCodePoint),
+                  color: category.color,
+                  size: 18,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     category.name,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      color:
+                          isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (taskProvider.getTasksByCategory(category.id!).isNotEmpty)
                   Text(
-                    taskProvider.getTasksByCategory(category.id!).length.toString(),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                    taskProvider
+                        .getTasksByCategory(category.id!)
+                        .length
+                        .toString(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
                   ),
               ],
             ),
@@ -172,9 +216,17 @@ class CategoryPanel extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: subCategories.map((subCategory) {
-                return _buildCategoryTreeItem(context, subCategory, categoryProvider, taskProvider, theme, indentLevel: indentLevel + 1);
-              }).toList(),
+              children:
+                  subCategories.map((subCategory) {
+                    return _buildCategoryTreeItem(
+                      context,
+                      subCategory,
+                      categoryProvider,
+                      taskProvider,
+                      theme,
+                      indentLevel: indentLevel + 1,
+                    );
+                  }).toList(),
             ),
           ),
       ],

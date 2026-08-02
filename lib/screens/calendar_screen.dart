@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 import '../providers/task_provider.dart';
 import '../widgets/page_header_widget.dart';
 import '../widgets/calendar_heatmap_widget.dart'; // Import the new widget
@@ -16,7 +15,7 @@ import 'package:permission_handler/permission_handler.dart';
 enum CalendarViewMode { month, week, overview }
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -26,16 +25,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedDate = DateTime.now();
   CalendarViewMode _viewMode = CalendarViewMode.month;
-  
+
   final DeviceCalendar _deviceCalendarPlugin = DeviceCalendar();
-  List<Event> _systemEvents = []; 
+  List<Event> _systemEvents = [];
   bool _hasCalendarPermission = false;
 
   @override
   void initState() {
     super.initState();
     if (PlatformUtil.isMobile) {
-      _requestCalendarPermission(); 
+      _requestCalendarPermission();
     }
   }
 
@@ -43,17 +42,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (!PlatformUtil.isMobile) return;
     try {
       final status = await _deviceCalendarPlugin.requestPermissions();
+      if (!mounted) return;
       if (status == CalendarPermissionStatus.granted) {
         setState(() => _hasCalendarPermission = true);
-        _fetchSystemEvents();
+        await _fetchSystemEvents();
       } else {
         var permStatus = await Permission.calendarFullAccess.status;
+        if (!mounted) return;
         if (!permStatus.isGranted) {
-           permStatus = await Permission.calendarFullAccess.request();
-           if (permStatus.isGranted) {
-              setState(() => _hasCalendarPermission = true);
-              _fetchSystemEvents();
-           }
+          permStatus = await Permission.calendarFullAccess.request();
+          if (!mounted) return;
+          if (permStatus.isGranted) {
+            setState(() => _hasCalendarPermission = true);
+            await _fetchSystemEvents();
+          }
         }
       }
     } catch (e) {
@@ -67,7 +69,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     try {
       final startDate = DateTime(_focusedDate.year, _focusedDate.month - 1, 1);
       final endDate = DateTime(_focusedDate.year, _focusedDate.month + 2, 0);
-      
+
       final calendars = await _deviceCalendarPlugin.listCalendars();
       List<Event> allEvents = [];
       for (var cal in calendars) {
@@ -91,18 +93,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // Header
-         _buildHeader(theme),
-          
+          _buildHeader(theme),
+
           Expanded(
-            child: Animations.smoothTransition(
-              child: _buildBody(theme),
-            ),
+            child: Animations.smoothTransition(child: _buildBody(theme)),
           ),
         ],
       ),
@@ -112,10 +112,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildHeader(ThemeData theme) {
     return PageHeaderWidget(
       title: '日历',
-      subtitle: _viewMode == CalendarViewMode.overview 
-          ? '年度概览' 
-          : '${_focusedDate.year}年${_focusedDate.month}月',
-      leading: Icon(Icons.calendar_month_rounded, color: theme.colorScheme.primary),
+      subtitle:
+          _viewMode == CalendarViewMode.overview
+              ? '年度概览'
+              : '${_focusedDate.year}年${_focusedDate.month}月',
+      leading: Icon(
+        Icons.calendar_month_rounded,
+        color: theme.colorScheme.primary,
+      ),
       actions: [
         // View Switcher
         Container(
@@ -123,7 +127,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.5),
+            ),
           ),
           padding: const EdgeInsets.all(2),
           child: Row(
@@ -149,7 +155,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildViewSwitchBtn(CalendarViewMode mode, String label, ThemeData theme) {
+  Widget _buildViewSwitchBtn(
+    CalendarViewMode mode,
+    String label,
+    ThemeData theme,
+  ) {
     final isSelected = _viewMode == mode;
     return GestureDetector(
       onTap: () => setState(() => _viewMode = mode),
@@ -157,13 +167,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+          color:
+              isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                  : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withOpacity(0.6),
+            color:
+                isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.6),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -188,14 +204,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final isWide = constraints.maxWidth >= 720;
         if (isWide) {
           // Calculate the height of the calendar card to determine layout strategy
-          final double leftWidth = constraints.maxWidth * 5 / 9; // flex 5 out of 9
-          final double cardWidth = leftWidth - 32; // 16 margin on each side
-          final double gridWidth = cardWidth - 16; // 8 padding on each side
-          final double cellWidth = gridWidth / 7;
           final double cellHeight = 55.0; // Fixed cell height on wide screen
-          final double gridHeight = cellHeight * 6 + 16; // 8 padding on top/bottom
-          final double calendarCardHeight = gridHeight + 110; // 456px total card height with buffers
-          final double totalRequiredHeight = calendarCardHeight + 16 + 180; // Calendar card + spacing + bottom card min height
+          final double gridHeight =
+              cellHeight * 6 + 16; // 8 padding on top/bottom
+          final double calendarCardHeight =
+              gridHeight + 110; // 456px total card height with buffers
+          final double totalRequiredHeight =
+              calendarCardHeight +
+              16 +
+              180; // Calendar card + spacing + bottom card min height
 
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,16 +223,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 child: LayoutBuilder(
                   builder: (context, viewportConstraints) {
                     final double viewportHeight = viewportConstraints.maxHeight;
-                    
+
                     if (viewportHeight >= totalRequiredHeight) {
                       // Bounded height layout: stretches bottom card to fill remaining space
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            flex: 3,
-                            child: _buildCalendarCard(theme),
-                          ),
+                          Expanded(flex: 3, child: _buildCalendarCard(theme)),
                           const SizedBox(height: 16),
                           Expanded(
                             flex: 1,
@@ -241,10 +255,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
               const SizedBox(width: 16),
               // Right side: Task List
-              Expanded(
-                flex: 4,
-                child: _buildSelectedDateTaskList(theme),
-              ),
+              Expanded(flex: 4, child: _buildSelectedDateTaskList(theme)),
             ],
           );
         } else {
@@ -264,32 +275,50 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         final tasks = taskProvider.allTasks;
-        final selectedMonthTasks = tasks.where((t) {
-          if (t.dueDate == null) return false;
-          return t.dueDate!.year == _focusedDate.year && t.dueDate!.month == _focusedDate.month;
-        }).toList();
-        
-        final completedMonthTasks = selectedMonthTasks.where((t) => t.isCompleted).toList();
+        final selectedMonthTasks =
+            tasks.where((t) {
+              if (t.dueDate == null) return false;
+              return t.dueDate!.year == _focusedDate.year &&
+                  t.dueDate!.month == _focusedDate.month;
+            }).toList();
+
+        final completedMonthTasks =
+            selectedMonthTasks.where((t) => t.isCompleted).toList();
         final completedCount = completedMonthTasks.length;
         final totalCount = selectedMonthTasks.length;
-        final completionRate = totalCount == 0 ? 0.0 : completedCount / totalCount;
-        
+        final completionRate =
+            totalCount == 0 ? 0.0 : completedCount / totalCount;
+
         // Count by quadrant
-        final q1 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.importantUrgent).length;
-        final q2 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.importantNotUrgent).length;
-        final q3 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.notImportantUrgent).length;
-        final q4 = selectedMonthTasks.where((t) => t.quadrant == QuadrantType.notImportantNotUrgent).length;
-        
+        final q1 =
+            selectedMonthTasks
+                .where((t) => t.quadrant == QuadrantType.importantUrgent)
+                .length;
+        final q2 =
+            selectedMonthTasks
+                .where((t) => t.quadrant == QuadrantType.importantNotUrgent)
+                .length;
+        final q3 =
+            selectedMonthTasks
+                .where((t) => t.quadrant == QuadrantType.notImportantUrgent)
+                .length;
+        final q4 =
+            selectedMonthTasks
+                .where((t) => t.quadrant == QuadrantType.notImportantNotUrgent)
+                .length;
+
         return Container(
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -301,7 +330,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Text(
                   '${_focusedDate.month}月 效率概览',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 // Progress Bar
@@ -312,8 +343,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: completionRate,
-                          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                          valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            theme.colorScheme.primary,
+                          ),
                           minHeight: 8,
                         ),
                       ),
@@ -332,17 +367,37 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 Text(
                   '已完成 $completedCount / $totalCount 个任务',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatIndicator('重要且紧急', q1, AppTheme.q1ImportantUrgent, theme),
-                    _buildStatIndicator('重要不紧急', q2, AppTheme.q2ImportantNotUrgent, theme),
-                    _buildStatIndicator('紧急不重要', q3, AppTheme.q3NotImportantUrgent, theme),
-                    _buildStatIndicator('不重要不紧急', q4, AppTheme.q4NotImportantNotUrgent, theme),
+                    _buildStatIndicator(
+                      '重要且紧急',
+                      q1,
+                      AppTheme.q1ImportantUrgent,
+                      theme,
+                    ),
+                    _buildStatIndicator(
+                      '重要不紧急',
+                      q2,
+                      AppTheme.q2ImportantNotUrgent,
+                      theme,
+                    ),
+                    _buildStatIndicator(
+                      '紧急不重要',
+                      q3,
+                      AppTheme.q3NotImportantUrgent,
+                      theme,
+                    ),
+                    _buildStatIndicator(
+                      '不重要不紧急',
+                      q4,
+                      AppTheme.q4NotImportantNotUrgent,
+                      theme,
+                    ),
                   ],
                 ),
               ],
@@ -353,17 +408,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildStatIndicator(String label, int count, Color color, ThemeData theme) {
+  Widget _buildStatIndicator(
+    String label,
+    int count,
+    Color color,
+    ThemeData theme,
+  ) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(height: 4),
         Text(
@@ -377,7 +434,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           label,
           style: theme.textTheme.bodySmall?.copyWith(
             fontSize: 9,
-            color: theme.colorScheme.onSurface.withOpacity(0.5),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -390,19 +447,20 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final double rawHeight = constraints.maxHeight;
         final double cardHeight = rawHeight.isInfinite ? 420.0 : rawHeight;
         final double cardWidth = constraints.maxWidth;
-        
+
         // Headers + padding: 38 (weekday header) + 1 (divider) + 48 (nav) + 16 (bottom padding) = 103px.
         // Let's add some padding: 105px total headers height.
         const double headersHeight = 105.0;
         const double gridVerticalPadding = 16.0;
         const double gridHorizontalPadding = 16.0; // 8 left + 8 right
-        
-        final double availableGridHeight = cardHeight - headersHeight - gridVerticalPadding;
+
+        final double availableGridHeight =
+            cardHeight - headersHeight - gridVerticalPadding;
         final double cellHeight = availableGridHeight / 6;
-        
+
         final double availableGridWidth = cardWidth - gridHorizontalPadding;
         final double cellWidth = availableGridWidth / 7;
-        
+
         // Make sure cellHeight is at least 30px to avoid squishing
         final double finalCellHeight = cellHeight.clamp(30.0, 120.0);
         final double childAspectRatio = cellWidth / finalCellHeight;
@@ -414,10 +472,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -428,13 +488,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
               _buildWeekDaysHeader(theme),
               const Divider(height: 1),
               SizedBox(
-                height: gridHeight, 
+                height: gridHeight,
                 child: PageView.builder(
-                  controller: PageController(initialPage: _calculatePageIndex(_focusedDate)),
+                  controller: PageController(
+                    initialPage: _calculatePageIndex(_focusedDate),
+                  ),
                   onPageChanged: (index) {
-                     setState(() {
-                       _focusedDate = DateTime(_focusedDate.year, index % 12 + 1);
-                     });
+                    setState(() {
+                      _focusedDate = DateTime(
+                        _focusedDate.year,
+                        index % 12 + 1,
+                      );
+                    });
                   },
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: (context, index) {
@@ -442,22 +507,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   },
                 ),
               ),
-               // Navigation Buttons (Manual)
+              // Navigation Buttons (Manual)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.chevron_left_rounded),
                     onPressed: () {
-                       setState(() => _focusedDate = DateTime(_focusedDate.year, _focusedDate.month - 1));
-                       _fetchSystemEvents();
+                      setState(
+                        () =>
+                            _focusedDate = DateTime(
+                              _focusedDate.year,
+                              _focusedDate.month - 1,
+                            ),
+                      );
+                      _fetchSystemEvents();
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded),
-                    onPressed: () { 
-                       setState(() => _focusedDate = DateTime(_focusedDate.year, _focusedDate.month + 1));
-                       _fetchSystemEvents();
+                    onPressed: () {
+                      setState(
+                        () =>
+                            _focusedDate = DateTime(
+                              _focusedDate.year,
+                              _focusedDate.month + 1,
+                            ),
+                      );
+                      _fetchSystemEvents();
                     },
                   ),
                 ],
@@ -465,7 +542,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -479,13 +556,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: days.map((e) => Text(
-          e, 
-          style: theme.textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.bold, 
-            color: theme.colorScheme.onSurface.withOpacity(0.4)
-          ),
-        )).toList(),
+        children:
+            days
+                .map(
+                  (e) => Text(
+                    e,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -493,9 +575,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildCalendarGrid(ThemeData theme, double childAspectRatio) {
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
-        final daysInMonth = DateTime(_focusedDate.year, _focusedDate.month + 1, 0).day;
-        final firstDayWeekday = DateTime(_focusedDate.year, _focusedDate.month, 1).weekday % 7;
-        
+        final daysInMonth =
+            DateTime(_focusedDate.year, _focusedDate.month + 1, 0).day;
+        final firstDayWeekday =
+            DateTime(_focusedDate.year, _focusedDate.month, 1).weekday % 7;
+
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           physics: const NeverScrollableScrollPhysics(),
@@ -506,23 +590,38 @@ class _CalendarScreenState extends State<CalendarScreen> {
           itemCount: 42, // Always show 6 rows
           itemBuilder: (context, index) {
             final dayOffset = index - firstDayWeekday;
-            if (dayOffset < 0 || dayOffset >= daysInMonth) return const SizedBox.shrink();
-            
-            final date = DateTime(_focusedDate.year, _focusedDate.month, dayOffset + 1);
+            if (dayOffset < 0 || dayOffset >= daysInMonth) {
+              return const SizedBox.shrink();
+            }
+
+            final date = DateTime(
+              _focusedDate.year,
+              _focusedDate.month,
+              dayOffset + 1,
+            );
             final tasks = taskProvider.getTasksByDate(date);
             final isSelected = _isSameDay(date, _selectedDate);
             final isToday = _isSameDay(date, DateTime.now());
-            
+
             return GestureDetector(
               onTap: () => setState(() => _selectedDate = date),
               child: Container(
                 margin: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isSelected 
-                      ? theme.colorScheme.primary 
-                      : isToday ? theme.colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+                  color:
+                      isSelected
+                          ? theme.colorScheme.primary
+                          : isToday
+                          ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                          : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
-                  border: isToday && !isSelected ? Border.all(color: theme.colorScheme.primary, width: 1.5) : null,
+                  border:
+                      isToday && !isSelected
+                          ? Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 1.5,
+                          )
+                          : null,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -530,10 +629,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     Text(
                       '${date.day}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                         color: isSelected 
-                            ? Colors.white 
-                            : isToday ? theme.colorScheme.primary : theme.colorScheme.onSurface,
-                         fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
+                        color:
+                            isSelected
+                                ? Colors.white
+                                : isToday
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface,
+                        fontWeight:
+                            isSelected || isToday
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                       ),
                     ),
                     if (tasks.isNotEmpty)
@@ -545,23 +650,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             // Show small dots/bars for tasks
                             // Tasks dot
                             Container(
-                              width: 4, height: 4,
+                              width: 4,
+                              height: 4,
                               decoration: BoxDecoration(
-                                color: isSelected ? Colors.white : _getTaskStatusColor(tasks),
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : _getTaskStatusColor(tasks),
                                 shape: BoxShape.circle,
                               ),
                             ),
                             // System events dot
-                            if (_getSystemEvents(_systemEvents, date).isNotEmpty) ...[
-                               const SizedBox(width: 2),
-                               Container(
-                                 width: 4, height: 4,
-                                 decoration: BoxDecoration(
-                                   color: isSelected ? Colors.white : Colors.purpleAccent,
-                                   shape: BoxShape.circle,
-                                 ),
-                               ),
-                            ]
+                            if (_getSystemEvents(
+                              _systemEvents,
+                              date,
+                            ).isNotEmpty) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : Colors.purpleAccent,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -577,68 +693,87 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Color _getTaskStatusColor(List<Task> tasks) {
     if (tasks.every((t) => t.isCompleted)) return Colors.green;
-    if (tasks.any((t) => t.quadrant == QuadrantType.importantUrgent)) return AppTheme.q1ImportantUrgent;
+    if (tasks.any((t) => t.quadrant == QuadrantType.importantUrgent)) {
+      return AppTheme.q1ImportantUrgent;
+    }
     return Colors.grey;
   }
 
   Widget _buildWeekView(ThemeData theme) {
-     return Consumer<TaskProvider>(
+    return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         // Logic to show a horizontal scrollable week strip
         return Column(
           children: [
-             // For simplicity in this demo, just reuse the month grid logic but formatted differently?
-             // Or better, a horizontal list of days.
-             SizedBox(
-               height: 100,
-               child: ListView.builder(
-                 scrollDirection: Axis.horizontal,
-                 itemCount: 30, // Show 30 days around selected date?
-                 // This is tricky without a proper library. 
-                 // Let's implement a simple 7-day strip centered on selected date.
-                 itemBuilder: (context, index) {
-                   final date = _selectedDate.subtract(const Duration(days: 3)).add(Duration(days: index));
-                   final isSelected = _isSameDay(date, _selectedDate);
-                   
-                   return GestureDetector(
-                     onTap: () => setState(() => _selectedDate = date),
-                     child: Container(
-                       width: 60,
-                       margin: const EdgeInsets.all(8),
-                       decoration: BoxDecoration(
-                         color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
-                         borderRadius: BorderRadius.circular(16),
-                         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
-                       ),
-                       child: Column(
-                         mainAxisAlignment: MainAxisAlignment.center,
-                         children: [
-                           Text(
-                             _getWeekdayName(date.weekday),
-                             style: theme.textTheme.bodySmall?.copyWith(
-                               color: isSelected ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.5)
-                             ),
-                           ),
-                           const SizedBox(height: 4),
-                           Text(
-                             '${date.day}',
-                             style: theme.textTheme.titleMedium?.copyWith(
-                               fontWeight: FontWeight.bold,
-                               color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
-                   );
-                 },
-               ),
-             ),
-             Expanded(child: _buildSelectedDateTaskList(theme)),
+            // For simplicity in this demo, just reuse the month grid logic but formatted differently?
+            // Or better, a horizontal list of days.
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 30, // Show 30 days around selected date?
+                // This is tricky without a proper library.
+                // Let's implement a simple 7-day strip centered on selected date.
+                itemBuilder: (context, index) {
+                  final date = _selectedDate
+                      .subtract(const Duration(days: 3))
+                      .add(Duration(days: index));
+                  final isSelected = _isSameDay(date, _selectedDate);
+
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedDate = date),
+                    child: Container(
+                      width: 60,
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color:
+                            isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _getWeekdayName(date.weekday),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color:
+                                  isSelected
+                                      ? Colors.white
+                                      : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${date.day}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  isSelected
+                                      ? Colors.white
+                                      : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Expanded(child: _buildSelectedDateTaskList(theme)),
           ],
         );
-      }
-     );
+      },
+    );
   }
 
   String _getWeekdayName(int weekday) {
@@ -658,7 +793,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           // Warning: Iterating all tasks and extracting dates might be slow if tasks don't store date.
           // But typically they do.
           if (task.dueDate != null) {
-            final date = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+            final date = DateTime(
+              task.dueDate!.year,
+              task.dueDate!.month,
+              task.dueDate!.day,
+            );
             if (datasets[date] == null) datasets[date] = [];
             datasets[date]!.add(task);
           }
@@ -676,16 +815,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 endDate: DateTime.now(),
                 datasets: datasets,
                 onDaySelected: (date) {
-                   setState(() {
-                     _selectedDate = date;
-                     _viewMode = CalendarViewMode.month; // Jump to month view on selection
-                     _focusedDate = date;
-                   });
+                  setState(() {
+                    _selectedDate = date;
+                    _viewMode =
+                        CalendarViewMode
+                            .month; // Jump to month view on selection
+                    _focusedDate = date;
+                  });
                 },
               ),
               const Spacer(),
               Center(
-                child: Icon(Icons.insights_rounded, size: 64, color: theme.colorScheme.primary.withOpacity(0.2)),
+                child: Icon(
+                  Icons.insights_rounded,
+                  size: 64,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                ),
               ),
               const Spacer(),
             ],
@@ -695,20 +840,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-
   Widget _buildSelectedDateTaskList(ThemeData theme) {
     return Consumer<TaskProvider>(
       builder: (context, taskProvider, child) {
         final tasks = taskProvider.getTasksByDate(_selectedDate);
         final systemEvents = _getSystemEvents(_systemEvents, _selectedDate);
-        
+
         return Container(
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 16,
                 offset: const Offset(0, -4),
               ),
@@ -723,15 +867,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withOpacity(0.2),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              
+
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -740,102 +887,149 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       children: [
                         Text(
                           '${_selectedDate.month}月${_selectedDate.day}日 任务列表',
-                          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           '${tasks.length} 个任务',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.5)
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
                     FloatingActionButton.small(
                       onPressed: () {
-                         // Add task logic
-                         // Navigator.pushNamed(context, '/add_task', arguments: _selectedDate);
+                        // Add task logic
+                        // Navigator.pushNamed(context, '/add_task', arguments: _selectedDate);
                       },
                       child: const Icon(Icons.add),
                     ),
                   ],
                 ),
               ),
-              
+
               const Divider(),
-              
+
               // List
               Expanded(
-                child: tasks.isEmpty 
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.event_busy_rounded, size: 48, color: theme.colorScheme.onSurface.withOpacity(0.1)),
-                          const SizedBox(height: 16),
-                          Text('这一天没有任务', style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.4))),
-                        ],
-                      ),
-                    )
-                  : Animations.animatedList(
-                      itemCount: tasks.length + systemEvents.length,
-                      itemBuilder: (context, index) {
-                        // Creating a combined list view?
-                        // Let's show system events first if any
-                        if (index < systemEvents.length) {
-                           final event = systemEvents[index];
-                           return Container(
-                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                             decoration: BoxDecoration(
-                               color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                               borderRadius: BorderRadius.circular(12),
-                               border: Border.all(color: Colors.purple.withOpacity(0.3)),
-                             ),
-                             child: ListTile(
-                               leading: const Icon(Icons.event, color: Colors.purple),
-                               title: Text(event.title),
-                               subtitle: Text(
-                                 '${event.startDate.hour}:${event.startDate.minute.toString().padLeft(2,'0')} - ${event.endDate.hour}:${event.endDate.minute.toString().padLeft(2,'0')}'
-                               ),
-                             ),
-                           );
-                        }
-                        
-                        final taskIndex = index - systemEvents.length;
-                        final task = tasks[taskIndex];
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.scaffoldBackgroundColor,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+                child:
+                    tasks.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.event_busy_rounded,
+                                size: 48,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.1,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '这一天没有任务',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: ListTile(
-                            leading: Container(
-                              width: 12,
-                              height: 12,
+                        )
+                        : Animations.animatedList(
+                          itemCount: tasks.length + systemEvents.length,
+                          itemBuilder: (context, index) {
+                            // Creating a combined list view?
+                            // Let's show system events first if any
+                            if (index < systemEvents.length) {
+                              final event = systemEvents[index];
+                              return Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                      .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.purple.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.event,
+                                    color: Colors.purple,
+                                  ),
+                                  title: Text(event.title),
+                                  subtitle: Text(
+                                    '${event.startDate.hour}:${event.startDate.minute.toString().padLeft(2, '0')} - ${event.endDate.hour}:${event.endDate.minute.toString().padLeft(2, '0')}',
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final taskIndex = index - systemEvents.length;
+                            final task = tasks[taskIndex];
+                            return Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: QuadrantConstants.getQuadrantColor(task.quadrant),
-                                shape: BoxShape.circle,
+                                color: theme.scaffoldBackgroundColor,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: theme.colorScheme.outline.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
                               ),
-                            ),
-                            title: Text(
-                              task.title,
-                              style: TextStyle(
-                                decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                                color: task.isCompleted ? theme.colorScheme.onSurface.withOpacity(0.5) : theme.colorScheme.onSurface,
+                              child: ListTile(
+                                leading: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: QuadrantConstants.getQuadrantColor(
+                                      task.quadrant,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                title: Text(
+                                  task.title,
+                                  style: TextStyle(
+                                    decoration:
+                                        task.isCompleted
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                    color:
+                                        task.isCompleted
+                                            ? theme.colorScheme.onSurface
+                                                .withValues(alpha: 0.5)
+                                            : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                trailing: Checkbox(
+                                  value: task.isCompleted,
+                                  onChanged: (val) {
+                                    taskProvider.toggleTaskCompletion(task);
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
                               ),
-                            ),
-                            trailing: Checkbox(
-                              value: task.isCompleted,
-                              onChanged: (val) {
-                                taskProvider.toggleTaskCompletion(task);
-                              },
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
               ),
             ],
           ),
@@ -847,10 +1041,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
-  
+
   List<Event> _getSystemEvents(List<Event> events, DateTime date) {
     return events.where((e) {
-      return e.startDate.year == date.year && e.startDate.month == date.month && e.startDate.day == date.day;
+      return e.startDate.year == date.year &&
+          e.startDate.month == date.month &&
+          e.startDate.day == date.day;
     }).toList();
   }
 }

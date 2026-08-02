@@ -4,7 +4,7 @@ import '../providers/task_provider.dart';
 import '../constants/quadrant_constants.dart';
 
 class QuadrantCompletionChart extends StatelessWidget {
-  const QuadrantCompletionChart({Key? key}) : super(key: key);
+  const QuadrantCompletionChart({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,17 +24,18 @@ class QuadrantCompletionChart extends StatelessWidget {
           children: [
             const Text(
               '四象限完成率对比',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ...quadrants.map((quadrant) {
               final tasks = taskProvider.getTasksByQuadrant(quadrant);
-              final completionRate = taskProvider.getCompletionRateByQuadrant(quadrant);
-              final completedCount = taskProvider.getCompletedCountByQuadrant(quadrant);
-              
+              final completionRate = taskProvider.getCompletionRateByQuadrant(
+                quadrant,
+              );
+              final completedCount = taskProvider.getCompletedCountByQuadrant(
+                quadrant,
+              );
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Column(
@@ -52,9 +53,7 @@ class QuadrantCompletionChart extends StatelessWidget {
                         ),
                         Text(
                           '${completionRate.toStringAsFixed(1)}%',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -69,10 +68,7 @@ class QuadrantCompletionChart extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '已完成: $completedCount / ${tasks.length}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -83,4 +79,4 @@ class QuadrantCompletionChart extends StatelessWidget {
       ),
     );
   }
-} 
+}

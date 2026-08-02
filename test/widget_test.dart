@@ -8,6 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:potato_todo/main.dart';
 import 'package:potato_todo/providers/task_provider.dart';
@@ -24,6 +25,8 @@ import 'package:potato_todo/models/category.dart';
 class MockDatabaseService implements DatabaseInterface {
   final List<Task> _tasks = [];
   final List<TaskCategory> _categories = [];
+  bool _tasksInitialized = false;
+  bool _categoriesInitialized = false;
 
   @override
   Future<void> initialize() async {}
@@ -62,6 +65,14 @@ class MockDatabaseService implements DatabaseInterface {
   }
 
   @override
+  Future<bool> isTaskDataInitialized() async => _tasksInitialized;
+
+  @override
+  Future<void> markTaskDataInitialized() async {
+    _tasksInitialized = true;
+  }
+
+  @override
   Future<List<TaskCategory>> getCategories() async => _categories;
 
   @override
@@ -95,14 +106,19 @@ class MockDatabaseService implements DatabaseInterface {
   }
 
   @override
-  Future<void> updateCategoryOrder(List<TaskCategory> reorderedCategories) async {
+  Future<void> updateCategoryOrder(
+    List<TaskCategory> reorderedCategories,
+  ) async {
     _categories.clear();
     _categories.addAll(reorderedCategories);
   }
 
   @override
-  Future<void> clearCategoriesTable() async {
-    _categories.clear();
+  Future<bool> isCategoryDataInitialized() async => _categoriesInitialized;
+
+  @override
+  Future<void> markCategoryDataInitialized() async {
+    _categoriesInitialized = true;
   }
 }
 
@@ -128,11 +144,14 @@ void main() {
   late MockNotificationService mockNotification;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     mockDb = MockDatabaseService();
     mockNotification = MockNotificationService();
   });
 
-  testWidgets('PotatoTodo app loads and shows main content', (WidgetTester tester) async {
+  testWidgets('PotatoTodo app loads and shows main content', (
+    WidgetTester tester,
+  ) async {
     // Set view size to mobile constraints to force mobile layout with BottomNavigationBar
     tester.view.physicalSize = const Size(400, 800);
     tester.view.devicePixelRatio = 1.0;
@@ -145,18 +164,17 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => CategoryProvider(mockDb)),
           ChangeNotifierProvider(
-            create: (_) => CategoryProvider(mockDb),
+            create:
+                (_) => TaskProvider(
+                  mockDb,
+                  mockNotification,
+                  ensureDatabaseInitialized: false,
+                ),
           ),
-          ChangeNotifierProvider(
-            create: (_) => TaskProvider(mockDb, mockNotification, ensureDatabaseInitialized: false),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => PomodoroProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => GamificationProvider(),
-          ),
+          ChangeNotifierProvider(create: (_) => PomodoroProvider()),
+          ChangeNotifierProvider(create: (_) => GamificationProvider()),
         ],
         child: const MyApp(),
       ),
@@ -167,7 +185,7 @@ void main() {
 
     // Verify that the app title exists
     expect(find.text('土豆 Todo'), findsOneWidget);
-    
+
     // Verify that we can find some basic navigation elements
     expect(find.byType(BottomNavigationBar), findsOneWidget);
   });
@@ -185,18 +203,17 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ChangeNotifierProvider(create: (_) => CategoryProvider(mockDb)),
           ChangeNotifierProvider(
-            create: (_) => CategoryProvider(mockDb),
+            create:
+                (_) => TaskProvider(
+                  mockDb,
+                  mockNotification,
+                  ensureDatabaseInitialized: false,
+                ),
           ),
-          ChangeNotifierProvider(
-            create: (_) => TaskProvider(mockDb, mockNotification, ensureDatabaseInitialized: false),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => PomodoroProvider(),
-          ),
-          ChangeNotifierProvider(
-            create: (_) => GamificationProvider(),
-          ),
+          ChangeNotifierProvider(create: (_) => PomodoroProvider()),
+          ChangeNotifierProvider(create: (_) => GamificationProvider()),
         ],
         child: const MyApp(),
       ),

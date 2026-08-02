@@ -8,26 +8,24 @@ class QuadrantStatCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const QuadrantStatCard({
-    Key? key,
+    super.key,
     required this.quadrantType,
     required this.count,
     required this.totalCount,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final quadrantColor = QuadrantConstants.getQuadrantColor(quadrantType);
-    final percent = totalCount > 0 ? (count / totalCount * 100).toStringAsFixed(1) : '0';
-    
+    final percent =
+        totalCount > 0 ? (count / totalCount * 100).toStringAsFixed(1) : '0';
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: quadrantColor.withOpacity(0.5),
-          width: 1,
-        ),
+        side: BorderSide(color: quadrantColor.withValues(alpha: 0.5), width: 1),
       ),
       child: InkWell(
         onTap: onTap,
@@ -46,9 +44,12 @@ class QuadrantStatCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: quadrantColor.withOpacity(0.2),
+                      color: quadrantColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -72,10 +73,7 @@ class QuadrantStatCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 QuadrantConstants.getQuadrantDescription(quadrantType),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -91,12 +89,7 @@ class QuadrantStatCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    '任务',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                    ),
-                  ),
+                  Text('任务', style: TextStyle(color: Colors.grey[600])),
                 ],
               ),
             ],
@@ -105,4 +98,4 @@ class QuadrantStatCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

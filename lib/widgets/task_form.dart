@@ -12,11 +12,7 @@ class TaskForm extends StatefulWidget {
   final Task? task;
   final QuadrantType? initialQuadrantType;
 
-  const TaskForm({
-    Key? key,
-    this.task,
-    this.initialQuadrantType,
-  }) : super(key: key);
+  const TaskForm({super.key, this.task, this.initialQuadrantType});
 
   @override
   State<TaskForm> createState() => _TaskFormState();
@@ -34,14 +30,16 @@ class _TaskFormState extends State<TaskForm> {
   String? _repeatFrequency;
   int? _repeatInterval;
   bool _isRepeating = false;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // 初始化表单控制器
     _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    _descriptionController = TextEditingController(
+      text: widget.task?.description ?? '',
+    );
     _isImportant = widget.task?.isImportant ?? false;
     _isUrgent = widget.task?.isUrgent ?? false;
     _selectedCategoryId = widget.task?.categoryId;
@@ -74,14 +72,14 @@ class _TaskFormState extends State<TaskForm> {
       }
     }
   }
-  
+
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -96,12 +94,11 @@ class _TaskFormState extends State<TaskForm> {
       await HapticService.lightImpact();
     }
   }
-  
-  void _submitForm() {
+
+  Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-      final task = Task(
-        id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch,
+      final task = (widget.task ?? Task(title: _titleController.text)).copyWith(
         title: _titleController.text,
         description: _descriptionController.text,
         isImportant: _isImportant,
@@ -109,15 +106,15 @@ class _TaskFormState extends State<TaskForm> {
         categoryId: _selectedCategoryId,
         dueDate: _dueDate,
         reminderPriority: _reminderPriority,
-        repeatFrequency: _repeatFrequency,
-        repeatInterval: _repeatInterval,
+        repeatFrequency: _isRepeating ? _repeatFrequency : null,
+        repeatInterval: _isRepeating ? _repeatInterval : null,
         isRepeating: _isRepeating,
       );
 
       if (widget.task == null) {
-        taskProvider.addTask(task);
+        await taskProvider.addTask(task);
       } else {
-        taskProvider.updateTask(task);
+        await taskProvider.updateTask(task);
       }
 
       if (!mounted) return;
@@ -129,7 +126,7 @@ class _TaskFormState extends State<TaskForm> {
   Widget build(BuildContext context) {
     final categoryProvider = Provider.of<CategoryProvider>(context);
     final categories = categoryProvider.categories;
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -200,10 +197,7 @@ class _TaskFormState extends State<TaskForm> {
                 border: OutlineInputBorder(),
               ),
               items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('无分类'),
-                ),
+                const DropdownMenuItem(value: null, child: Text('无分类')),
                 ...categories.map((category) {
                   return DropdownMenuItem(
                     value: category.id,
@@ -220,7 +214,11 @@ class _TaskFormState extends State<TaskForm> {
             const SizedBox(height: 16),
             ListTile(
               title: const Text('截止日期'),
-              subtitle: Text(_dueDate == null ? '未设置' : '${_dueDate!.year}-${_dueDate!.month}-${_dueDate!.day}'),
+              subtitle: Text(
+                _dueDate == null
+                    ? '未设置'
+                    : '${_dueDate!.year}-${_dueDate!.month}-${_dueDate!.day}',
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -277,13 +275,15 @@ class _TaskFormState extends State<TaskForm> {
                     const SizedBox(width: 8),
                     DropdownButton<int>(
                       value: _repeatInterval,
-                      items: List.generate(7, (index) => index + 1)
-                          .map((int value) {
-                        return DropdownMenuItem<int>(
-                          value: value,
-                          child: Text(value.toString()),
-                        );
-                      }).toList(),
+                      items:
+                          List.generate(7, (index) => index + 1).map((
+                            int value,
+                          ) {
+                            return DropdownMenuItem<int>(
+                              value: value,
+                              child: Text(value.toString()),
+                            );
+                          }).toList(),
                       onChanged: (int? value) {
                         if (value != null) {
                           setState(() {
@@ -308,7 +308,7 @@ class _TaskFormState extends State<TaskForm> {
                 },
               ),
             ],
-            
+
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -325,11 +325,18 @@ class _TaskFormState extends State<TaskForm> {
 
   Widget _buildPrioritySection() {
     if (widget.task == null) return const SizedBox.shrink();
-    
-    final priorityScore = PriorityRecommendationService.calculatePriorityScore(widget.task!);
-    final prioritySuggestion = PriorityRecommendationService.getPrioritySuggestion(widget.task!);
-    final priorityColor = PriorityRecommendationService.getPriorityColor(widget.task!);
-    final priorityIcon = PriorityRecommendationService.getPriorityIcon(widget.task!);
+
+    final priorityScore = PriorityRecommendationService.calculatePriorityScore(
+      widget.task!,
+    );
+    final prioritySuggestion =
+        PriorityRecommendationService.getPrioritySuggestion(widget.task!);
+    final priorityColor = PriorityRecommendationService.getPriorityColor(
+      widget.task!,
+    );
+    final priorityIcon = PriorityRecommendationService.getPriorityIcon(
+      widget.task!,
+    );
 
     return Card(
       child: Padding(
@@ -339,19 +346,12 @@ class _TaskFormState extends State<TaskForm> {
           children: [
             const Text(
               '优先级建议',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Icon(
-                  priorityIcon,
-                  color: priorityColor,
-                  size: 24,
-                ),
+                Icon(priorityIcon, color: priorityColor, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -367,9 +367,7 @@ class _TaskFormState extends State<TaskForm> {
                       const SizedBox(height: 4),
                       Text(
                         '得分: $priorityScore',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -381,4 +379,4 @@ class _TaskFormState extends State<TaskForm> {
       ),
     );
   }
-} 
+}

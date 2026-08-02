@@ -4,7 +4,7 @@ import '../providers/pomodoro_provider.dart';
 import '../widgets/page_header_widget.dart';
 
 class PomodoroScreen extends StatefulWidget {
-  const PomodoroScreen({Key? key}) : super(key: key);
+  const PomodoroScreen({super.key});
 
   @override
   State<PomodoroScreen> createState() => _PomodoroScreenState();
@@ -18,7 +18,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     super.didChangeDependencies();
     // Hook up SnackBar callback
     _pomodoroProvider = Provider.of<PomodoroProvider>(context, listen: false);
-    
+
     _pomodoroProvider!.onWorkCompleteCallback = (minutes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,7 +47,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
@@ -78,11 +78,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               ),
             ],
           ),
-          
+
           // 番茄钟内容
-          Expanded(
-            child: _buildPomodoroContent(theme),
-          ),
+          Expanded(child: _buildPomodoroContent(theme)),
         ],
       ),
     );
@@ -98,14 +96,14 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             children: [
               // 时间显示
               _buildTimerDisplay(theme, pomodoroProvider),
-              
+
               const SizedBox(height: 40),
-              
+
               // 控制按钮
               _buildControlButtons(theme, pomodoroProvider),
-              
+
               const SizedBox(height: 40),
-              
+
               // 状态信息
               _buildStatusInfo(theme, pomodoroProvider),
             ],
@@ -115,24 +113,27 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     );
   }
 
-  Widget _buildTimerDisplay(ThemeData theme, PomodoroProvider pomodoroProvider) {
+  Widget _buildTimerDisplay(
+    ThemeData theme,
+    PomodoroProvider pomodoroProvider,
+  ) {
     final minutes = pomodoroProvider.remainingTime ~/ 60;
     final seconds = pomodoroProvider.remainingTime % 60;
-    
+
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primary.withOpacity(0.1),
-            theme.colorScheme.primary.withOpacity(0.05),
+            theme.colorScheme.primary.withValues(alpha: 0.1),
+            theme.colorScheme.primary.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.1),
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -150,7 +151,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
           Text(
             _getSessionText(pomodoroProvider.currentSession),
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -159,15 +160,21 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
     );
   }
 
-  Widget _buildControlButtons(ThemeData theme, PomodoroProvider pomodoroProvider) {
+  Widget _buildControlButtons(
+    ThemeData theme,
+    PomodoroProvider pomodoroProvider,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // 重置按钮
         IconButton(
-          onPressed: pomodoroProvider.currentState == PomodoroState.running ? null : () {
-            pomodoroProvider.resetTimer();
-          },
+          onPressed:
+              pomodoroProvider.currentState == PomodoroState.running
+                  ? null
+                  : () {
+                    pomodoroProvider.resetTimer();
+                  },
           icon: const Icon(Icons.refresh),
           tooltip: '重置',
           style: IconButton.styleFrom(
@@ -178,9 +185,9 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             padding: const EdgeInsets.all(16),
           ),
         ),
-        
+
         const SizedBox(width: 20),
-        
+
         // 开始/暂停按钮
         ElevatedButton(
           onPressed: () {
@@ -198,25 +205,35 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                pomodoroProvider.currentState == PomodoroState.running ? Icons.pause : Icons.play_arrow,
+                pomodoroProvider.currentState == PomodoroState.running
+                    ? Icons.pause
+                    : Icons.play_arrow,
                 size: 24,
               ),
               const SizedBox(width: 8),
               Text(
-                pomodoroProvider.currentState == PomodoroState.running ? '暂停' : '开始',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                pomodoroProvider.currentState == PomodoroState.running
+                    ? '暂停'
+                    : '开始',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
         ),
-        
+
         const SizedBox(width: 20),
-        
+
         // 跳过按钮
         IconButton(
-          onPressed: pomodoroProvider.currentState == PomodoroState.running ? () {
-            pomodoroProvider.skipSession();
-          } : null,
+          onPressed:
+              pomodoroProvider.currentState == PomodoroState.running
+                  ? () {
+                    pomodoroProvider.skipSession();
+                  }
+                  : null,
           icon: const Icon(Icons.skip_next),
           tooltip: '跳过',
           style: IconButton.styleFrom(
@@ -238,7 +255,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -249,7 +266,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               Text(
                 '已完成番茄钟',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               Text(
@@ -268,7 +285,7 @@ class _PomodoroScreenState extends State<PomodoroScreen> {
               Text(
                 '当前阶段',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               Text(

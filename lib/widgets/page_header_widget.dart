@@ -10,18 +10,18 @@ class PageHeaderWidget extends StatelessWidget {
   final bool showThemeToggle;
 
   const PageHeaderWidget({
-    Key? key,
+    super.key,
     required this.title,
     this.subtitle,
     this.actions,
     this.leading,
     this.showThemeToggle = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -30,10 +30,7 @@ class PageHeaderWidget extends StatelessWidget {
           // 主标题行
           Row(
             children: [
-              if (leading != null) ...[
-                leading!,
-                const SizedBox(width: 12),
-              ],
+              if (leading != null) ...[leading!, const SizedBox(width: 12)],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,14 +47,16 @@ class PageHeaderWidget extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-              
+
               // 右侧操作按钮
               if (actions != null || showThemeToggle)
                 Row(
@@ -85,11 +84,9 @@ class PageHeaderWidget extends StatelessWidget {
             themeProvider.toggleThemeMode();
           },
           icon: Icon(
-            themeProvider.isDarkMode 
-              ? Icons.light_mode 
-              : Icons.dark_mode,
+            themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
             size: 20,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
           tooltip: themeProvider.isDarkMode ? '切换到浅色模式' : '切换到深色模式',
           style: IconButton.styleFrom(
@@ -103,4 +100,4 @@ class PageHeaderWidget extends StatelessWidget {
       },
     );
   }
-} 
+}

@@ -6,7 +6,7 @@ class AppTheme {
   // Primary: Indigo/Slate for a professional, deep look
   static const Color primaryLight = Color(0xFF6366F1); // Indigo 500
   static const Color primaryDark = Color(0xFF818CF8); // Indigo 400
-  
+
   // Secondary: Coral/Salmon for warmth and call-to-actions
   static const Color secondaryLight = Color(0xFFFF7F50);
   static const Color secondaryDark = Color(0xFFFFAB91);
@@ -34,7 +34,11 @@ class AppTheme {
   static const Color q3NotImportantUrgent = Color(0xFFFFD93D);
   static const Color q4NotImportantNotUrgent = Color(0xFF95A5A6);
 
-  static TextTheme _buildTextTheme(TextTheme base, Color primary, Color secondary) {
+  static TextTheme _buildTextTheme(
+    TextTheme base,
+    Color primary,
+    Color secondary,
+  ) {
     return GoogleFonts.plusJakartaSansTextTheme(base).copyWith(
       displayLarge: GoogleFonts.plusJakartaSans(
         color: primary,
@@ -53,11 +57,7 @@ class AppTheme {
         fontWeight: FontWeight.w600,
         fontSize: 20,
       ),
-      bodyLarge: GoogleFonts.inter(
-        color: primary,
-        fontSize: 16,
-        height: 1.5,
-      ),
+      bodyLarge: GoogleFonts.inter(color: primary, fontSize: 16, height: 1.5),
       bodyMedium: GoogleFonts.inter(
         color: secondary,
         fontSize: 14,
@@ -68,7 +68,7 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
-    
+
     return base.copyWith(
       scaffoldBackgroundColor: backgroundLight,
       colorScheme: const ColorScheme.light(
@@ -111,7 +111,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -154,8 +157,14 @@ class AppTheme {
         unselectedItemColor: textSecondaryLight,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        selectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
       ),
       dividerTheme: const DividerThemeData(
         space: 1,
@@ -167,7 +176,7 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
-    
+
     return base.copyWith(
       scaffoldBackgroundColor: backgroundDark,
       colorScheme: const ColorScheme.dark(
@@ -210,7 +219,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surfaceDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Color(0xFF334155)),
@@ -253,10 +265,16 @@ class AppTheme {
         unselectedItemColor: textSecondaryDark,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        unselectedLabelStyle: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+        selectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 12,
+        ),
       ),
-       dividerTheme: const DividerThemeData(
+      dividerTheme: const DividerThemeData(
         space: 1,
         thickness: 1,
         color: Color(0xFF334155),

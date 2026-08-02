@@ -1,0 +1,1 @@
+const bool platformIsTestEnvironment = false;

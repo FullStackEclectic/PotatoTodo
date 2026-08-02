@@ -8,12 +8,12 @@ class CalendarHeatmapWidget extends StatelessWidget {
   final Function(DateTime)? onDaySelected;
 
   const CalendarHeatmapWidget({
-    Key? key,
+    super.key,
     required this.startDate,
     required this.endDate,
     required this.datasets,
     this.onDaySelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class CalendarHeatmapWidget extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate optimal cell size based on width and roughly 53 weeks (columns)
-        final double cellSize = (constraints.maxWidth - 52 * 2) / 53; 
+        final double cellSize = (constraints.maxWidth - 52 * 2) / 53;
 
         return SizedBox(
           height: cellSize * 7 + 30, // 7 days + padding
@@ -36,14 +36,15 @@ class CalendarHeatmapWidget extends StatelessWidget {
                 children: [
                   // Month Label if it's the start of a month in this week
                   _buildMonthLabel(context, weekIndex, days, cellSize),
-                  
+
                   // Days in this week
                   ...List.generate(7, (dayIndex) {
                     final index = weekIndex * 7 + dayIndex;
                     if (index >= days.length) return SizedBox(height: cellSize);
-                    
+
                     final day = days[index];
-                    final tasks = datasets[DateTime(day.year, day.month, day.day)] ?? [];
+                    final tasks =
+                        datasets[DateTime(day.year, day.month, day.day)] ?? [];
                     final intensity = _calculateIntensity(tasks);
 
                     return GestureDetector(
@@ -57,7 +58,8 @@ class CalendarHeatmapWidget extends StatelessWidget {
                           borderRadius: BorderRadius.circular(2),
                         ),
                         child: Tooltip(
-                          message: '${day.year}-${day.month}-${day.day}\n${tasks.length} tasks',
+                          message:
+                              '${day.year}-${day.month}-${day.day}\n${tasks.length} tasks',
                           child: const SizedBox(),
                         ),
                       ),
@@ -76,8 +78,10 @@ class CalendarHeatmapWidget extends StatelessWidget {
     final List<DateTime> days = [];
     // Align start date to previous Sunday (or Monday depending on preference)
     // Here we assume Sunday start
-    DateTime current = startDate.subtract(Duration(days: startDate.weekday % 7));
-    
+    DateTime current = startDate.subtract(
+      Duration(days: startDate.weekday % 7),
+    );
+
     while (current.isBefore(endDate) || current.isAtSameMomentAs(endDate)) {
       days.add(current);
       current = current.add(const Duration(days: 1));
@@ -85,10 +89,15 @@ class CalendarHeatmapWidget extends StatelessWidget {
     return days;
   }
 
-  Widget _buildMonthLabel(BuildContext context, int weekIndex, List<DateTime> days, double width) {
+  Widget _buildMonthLabel(
+    BuildContext context,
+    int weekIndex,
+    List<DateTime> days,
+    double width,
+  ) {
     final index = weekIndex * 7;
     if (index >= days.length) return SizedBox(width: width, height: 20);
-    
+
     final day = days[index];
     // Show month label roughly every 4 weeks or when month changes
     if (day.day <= 7) {
@@ -106,7 +115,20 @@ class CalendarHeatmapWidget extends StatelessWidget {
   }
 
   String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return months[month - 1];
   }
 
@@ -117,11 +139,11 @@ class CalendarHeatmapWidget extends StatelessWidget {
   }
 
   Color _getColorForIntensity(double intensity, ThemeData theme) {
-    if (intensity == 0) return theme.colorScheme.outline.withOpacity(0.1);
-    
+    if (intensity == 0) return theme.colorScheme.outline.withValues(alpha: 0.1);
+
     // Interpolate between light and dark primary color
     return Color.lerp(
-      theme.colorScheme.primary.withOpacity(0.3),
+      theme.colorScheme.primary.withValues(alpha: 0.3),
       theme.colorScheme.primary,
       intensity,
     )!;

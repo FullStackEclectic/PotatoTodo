@@ -8,7 +8,8 @@ import '../providers/task_provider.dart';
 import '../providers/category_provider.dart';
 import '../widgets/subtask_widget.dart';
 import '../services/haptic_service.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import '../constants/category_icons.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final Task? task;
@@ -16,11 +17,11 @@ class TaskDetailScreen extends StatefulWidget {
   final bool isMasterDetailView;
 
   const TaskDetailScreen({
-    Key? key,
+    super.key,
     this.task,
     this.initialQuadrantType,
     this.isMasterDetailView = false,
-  }) : super(key: key);
+  });
 
   @override
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
@@ -38,6 +39,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   int _reminderPriority = 2;
   String? _repeatFrequency;
   bool _isLoading = false;
+  bool _controllersInitialized = false;
 
   @override
   void initState() {
@@ -54,8 +56,22 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   void _initializeForm() {
-    _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    final title = widget.task?.title ?? '';
+    final description = widget.task?.description ?? '';
+    if (_controllersInitialized) {
+      _titleController.value = TextEditingValue(
+        text: title,
+        selection: TextSelection.collapsed(offset: title.length),
+      );
+      _descriptionController.value = TextEditingValue(
+        text: description,
+        selection: TextSelection.collapsed(offset: description.length),
+      );
+    } else {
+      _titleController = TextEditingController(text: title);
+      _descriptionController = TextEditingController(text: description);
+      _controllersInitialized = true;
+    }
     _isImportant = widget.task?.isImportant ?? false;
     _isUrgent = widget.task?.isUrgent ?? false;
     _selectedCategoryId = widget.task?.categoryId;
@@ -98,31 +114,48 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isEditing = widget.task != null;
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: widget.isMasterDetailView
-          ? null // No AppBar in master-detail view
-          : AppBar(
-              title: Text(isEditing ? '编辑任务' : '新建任务'),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              systemOverlayStyle: SystemUiOverlayStyle.dark,
-              actions: [
-                if (isEditing)
-                  IconButton(
-                    onPressed: _showDeleteDialog,
-                    icon: Icon(Icons.delete_outline, color: Colors.red),
-                    tooltip: '删除任务',
+      appBar:
+          widget.isMasterDetailView
+              ? null // No AppBar in master-detail view
+              : AppBar(
+                title: Text(isEditing ? '编辑任务' : '新建任务'),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                systemOverlayStyle: SystemUiOverlayStyle.dark,
+                actions: [
+                  if (isEditing)
+                    IconButton(
+                      onPressed: _showDeleteDialog,
+                      icon: Icon(Icons.delete_outline, color: Colors.red),
+                      tooltip: '删除任务',
+                    ),
+                  TextButton(
+                    onPressed: _isLoading ? null : _saveTask,
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            )
+                            : Text(
+                              '保存',
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                   ),
-                TextButton(
-                  onPressed: _isLoading ? null : _saveTask,
-                  child: _isLoading
-                    ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary)))
-                    : Text('保存', style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ),
+                ],
+              ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -137,14 +170,20 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   child: IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () {
-                      Provider.of<TaskProvider>(context, listen: false).setSelectedTask(null);
+                      Provider.of<TaskProvider>(
+                        context,
+                        listen: false,
+                      ).setSelectedTask(null);
                     },
                   ),
                 ),
               if (widget.isMasterDetailView && isEditing)
                 Align(
                   alignment: Alignment.topLeft,
-                  child: Text(isEditing ? '编辑任务' : '新建任务', style: theme.textTheme.headlineSmall)
+                  child: Text(
+                    isEditing ? '编辑任务' : '新建任务',
+                    style: theme.textTheme.headlineSmall,
+                  ),
                 ),
 
               Hero(
@@ -156,11 +195,18 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     decoration: InputDecoration(
                       labelText: '任务标题',
                       hintText: '输入任务标题...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) return '请输入任务标题';
+                      if (value == null || value.trim().isEmpty) {
+                        return '请输入任务标题';
+                      }
                       return null;
                     },
                   ),
@@ -173,7 +219,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     child: CheckboxListTile(
                       title: Text('重要', style: theme.textTheme.bodyMedium),
                       value: _isImportant,
-                      onChanged: (value) => setState(() => _isImportant = value ?? false),
+                      onChanged:
+                          (value) =>
+                              setState(() => _isImportant = value ?? false),
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
@@ -182,7 +230,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     child: CheckboxListTile(
                       title: Text('紧急', style: theme.textTheme.bodyMedium),
                       value: _isUrgent,
-                      onChanged: (value) => setState(() => _isUrgent = value ?? false),
+                      onChanged:
+                          (value) => setState(() => _isUrgent = value ?? false),
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
@@ -190,20 +239,40 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: QuadrantConstants.getQuadrantColor(_getQuadrantType()).withOpacity(0.1),
+                  color: QuadrantConstants.getQuadrantColor(
+                    _getQuadrantType(),
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: QuadrantConstants.getQuadrantColor(_getQuadrantType()).withOpacity(0.3)),
+                  border: Border.all(
+                    color: QuadrantConstants.getQuadrantColor(
+                      _getQuadrantType(),
+                    ).withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.category, size: 14, color: QuadrantConstants.getQuadrantColor(_getQuadrantType())),
+                    Icon(
+                      Icons.category,
+                      size: 14,
+                      color: QuadrantConstants.getQuadrantColor(
+                        _getQuadrantType(),
+                      ),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       QuadrantConstants.getQuadrantName(_getQuadrantType()),
-                      style: theme.textTheme.bodySmall?.copyWith(color: QuadrantConstants.getQuadrantColor(_getQuadrantType()), fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: QuadrantConstants.getQuadrantColor(
+                          _getQuadrantType(),
+                        ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -212,35 +281,51 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text('描述', style: theme.textTheme.bodyMedium), 
-                   TextButton.icon(
-                     onPressed: () => setState(() => _isPreviewingMarkdown = !_isPreviewingMarkdown),
-                     icon: Icon(_isPreviewingMarkdown ? Icons.edit : Icons.visibility, size: 16),
-                     label: Text(_isPreviewingMarkdown ? '编辑' : '预览MD'),
-                   ),
+                  Text('描述', style: theme.textTheme.bodyMedium),
+                  TextButton.icon(
+                    onPressed:
+                        () => setState(
+                          () => _isPreviewingMarkdown = !_isPreviewingMarkdown,
+                        ),
+                    icon: Icon(
+                      _isPreviewingMarkdown ? Icons.edit : Icons.visibility,
+                      size: 16,
+                    ),
+                    label: Text(_isPreviewingMarkdown ? '编辑' : '预览MD'),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
-              _isPreviewingMarkdown 
-                ? Container(
+              _isPreviewingMarkdown
+                  ? Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.5),
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     constraints: const BoxConstraints(minHeight: 100),
                     child: MarkdownBody(
-                      data: _descriptionController.text.isEmpty ? '_无内容_' : _descriptionController.text,
+                      data:
+                          _descriptionController.text.isEmpty
+                              ? '_无内容_'
+                              : _descriptionController.text,
                       styleSheet: MarkdownStyleSheet.fromTheme(theme),
                     ),
                   )
-                : TextFormField(
+                  : TextFormField(
                     controller: _descriptionController,
                     decoration: InputDecoration(
                       hintText: '添加任务描述 (支持 Markdown)...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                     maxLines: 4,
                   ),
@@ -255,23 +340,41 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           initialValue: _selectedCategoryId,
                           decoration: InputDecoration(
                             labelText: '分类',
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                           ),
                           items: [
-                            const DropdownMenuItem(value: null, child: Text('无分类')),
-                            ...categories.map((category) => DropdownMenuItem(
-                              value: category.id,
-                              child: Row(
-                                children: [
-                                  Icon(IconData(category.iconCodePoint, fontFamily: 'MaterialIcons'), size: 16, color: category.color),
-                                  const SizedBox(width: 8),
-                                  Text(category.name),
-                                ],
+                            const DropdownMenuItem(
+                              value: null,
+                              child: Text('无分类'),
+                            ),
+                            ...categories.map(
+                              (category) => DropdownMenuItem(
+                                value: category.id,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      CategoryIcons.fromCodePoint(
+                                        category.iconCodePoint,
+                                      ),
+                                      size: 16,
+                                      color: category.color,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(category.name),
+                                  ],
+                                ),
                               ),
-                            )),
+                            ),
                           ],
-                          onChanged: (value) => setState(() => _selectedCategoryId = value),
+                          onChanged:
+                              (value) =>
+                                  setState(() => _selectedCategoryId = value),
                         );
                       },
                     ),
@@ -282,15 +385,22 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       initialValue: _reminderPriority,
                       decoration: InputDecoration(
                         labelText: '提醒',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                       items: const [
                         DropdownMenuItem(value: 1, child: Text('低')),
                         DropdownMenuItem(value: 2, child: Text('中')),
                         DropdownMenuItem(value: 3, child: Text('高')),
                       ],
-                      onChanged: (value) => setState(() => _reminderPriority = value ?? 2),
+                      onChanged:
+                          (value) =>
+                              setState(() => _reminderPriority = value ?? 2),
                     ),
                   ),
                 ],
@@ -298,24 +408,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                   Expanded(
-                     child: DropdownButtonFormField<String?>(
-                       initialValue: _repeatFrequency,
-                       decoration: InputDecoration(
-                         labelText: '重复',
-                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                         prefixIcon: Icon(Icons.repeat, size: 20, color: theme.colorScheme.primary),
-                       ),
-                       items: const [
-                         DropdownMenuItem(value: null, child: Text('不重复')),
-                         DropdownMenuItem(value: 'daily', child: Text('每天')),
-                         DropdownMenuItem(value: 'weekly', child: Text('每周')),
-                         DropdownMenuItem(value: 'monthly', child: Text('每月')),
-                       ],
-                       onChanged: (value) => setState(() => _repeatFrequency = value),
-                     ),
-                   ),
+                  Expanded(
+                    child: DropdownButtonFormField<String?>(
+                      initialValue: _repeatFrequency,
+                      decoration: InputDecoration(
+                        labelText: '重复',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.repeat,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: null, child: Text('不重复')),
+                        DropdownMenuItem(value: 'daily', child: Text('每天')),
+                        DropdownMenuItem(value: 'weekly', child: Text('每周')),
+                        DropdownMenuItem(value: 'monthly', child: Text('每月')),
+                      ],
+                      onChanged:
+                          (value) => setState(() => _repeatFrequency = value),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -324,13 +444,27 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: '截止日期',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     suffixIcon: Icon(Icons.calendar_today, size: 20),
                   ),
                   child: Text(
-                    _dueDate == null ? '点击设置截止日期' : DateFormat('yyyy-MM-dd').format(_dueDate!),
-                    style: theme.textTheme.bodyMedium?.copyWith(color: _dueDate == null ? theme.colorScheme.onSurface.withOpacity(0.6) : theme.colorScheme.onSurface),
+                    _dueDate == null
+                        ? '点击设置截止日期'
+                        : DateFormat('yyyy-MM-dd').format(_dueDate!),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color:
+                          _dueDate == null
+                              ? theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              )
+                              : theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -338,7 +472,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 12),
-                SubTaskWidget(parentTask: widget.task!, onSubTaskChanged: () => setState(() {})),
+                SubTaskWidget(
+                  parentTask: widget.task!,
+                  onSubTaskChanged: () => setState(() {}),
+                ),
               ],
               const SizedBox(height: 20),
               if (widget.isMasterDetailView)
@@ -346,9 +483,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _isLoading ? null : _saveTask,
-                    child: _isLoading
-                      ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary)))
-                      : const Text('保存'),
+                    child:
+                        _isLoading
+                            ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.primary,
+                                ),
+                              ),
+                            )
+                            : const Text('保存'),
                   ),
                 ),
             ],
@@ -383,30 +530,36 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     setState(() => _isLoading = true);
     try {
       final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-      final task = Task(
-        id: widget.task?.id,
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        isImportant: _isImportant,
-        isUrgent: _isUrgent,
-        categoryId: _selectedCategoryId,
-        dueDate: _dueDate,
-        reminderPriority: _reminderPriority,
-        isCompleted: widget.task?.isCompleted ?? false,
-        repeatFrequency: _repeatFrequency,
-        isRepeating: _repeatFrequency != null,
-      );
+      final task = (widget.task ?? Task(title: _titleController.text.trim()))
+          .copyWith(
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim(),
+            isImportant: _isImportant,
+            isUrgent: _isUrgent,
+            categoryId: _selectedCategoryId,
+            dueDate: _dueDate,
+            reminderPriority: _reminderPriority,
+            repeatFrequency: _repeatFrequency,
+            repeatInterval:
+                _repeatFrequency == null
+                    ? null
+                    : (widget.task?.repeatInterval ?? 1),
+            isRepeating: _repeatFrequency != null,
+          );
       if (widget.task == null) {
         await taskProvider.addTask(task);
       } else {
-        await taskProvider.updateTask(task.copyWith(subTasks: widget.task!.subTasks));
+        await taskProvider.updateTask(task);
       }
       if (mounted) {
         if (!widget.isMasterDetailView) {
-           Navigator.of(context).pop();
+          Navigator.of(context).pop();
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(widget.task == null ? '任务创建成功' : '任务更新成功'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(widget.task == null ? '任务创建成功' : '任务更新成功'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -425,33 +578,43 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   void _showDeleteDialog() {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('删除任务'),
-        content: Text('确定要删除任务"${widget.task!.title}"吗？此操作无法撤销。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('取消')),
-          TextButton(
-            onPressed: () async {
-              final taskProvider = Provider.of<TaskProvider>(context, listen: false);
-              final navigator = Navigator.of(context);
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('删除任务'),
+            content: Text('确定要删除任务"${widget.task!.title}"吗？此操作无法撤销。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final taskProvider = Provider.of<TaskProvider>(
+                    context,
+                    listen: false,
+                  );
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-              Navigator.pop(dialogContext); // 关闭对话框
+                  Navigator.pop(dialogContext); // 关闭对话框
 
-              await taskProvider.deleteTask(widget.task!.id!);
-              if (mounted) {
-                if (!widget.isMasterDetailView) {
-                  navigator.pop(); // 返回上一页
-                }
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('任务已删除'), backgroundColor: Colors.red),
-                );
-              }
-            },
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
+                  await taskProvider.deleteTask(widget.task!.id!);
+                  if (mounted) {
+                    if (!widget.isMasterDetailView) {
+                      navigator.pop(); // 返回上一页
+                    }
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('任务已删除'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('删除', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

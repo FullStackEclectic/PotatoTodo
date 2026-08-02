@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 enum BadgeType {
-  earlyBird,      // 早起鸟：连续7天早上8点前打卡
-  focusMaster,    // 专注大师：累计专注100小时
-  taskMachine,    // 任务机器：累计完成1000个任务
-  planner,        // 规划达人：连续30天有创建任务
-  streakFire,     // 连胜火焰：连续打卡30天
+  earlyBird, // 早起鸟：连续7天早上8点前打卡
+  focusMaster, // 专注大师：累计专注100小时
+  taskMachine, // 任务机器：累计完成1000个任务
+  planner, // 规划达人：连续30天有创建任务
+  streakFire, // 连胜火焰：连续打卡30天
 }
 
 class UserBadge {
@@ -86,7 +86,7 @@ class UserBadge {
       color: Colors.blueAccent,
       target: 50,
     ),
-     UserBadge(
+    UserBadge(
       id: 'streak_fire',
       type: BadgeType.streakFire,
       name: '坚持不懈',

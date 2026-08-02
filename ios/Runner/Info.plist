@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCalendarsUsageDescription</key>
+	<string>土豆 Todo 需要访问系统日历，以便在应用中显示日历事件。</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>土豆 Todo 需要完整访问系统日历，以便在应用中显示日历事件。</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>土豆 Todo 需要写入系统日历的权限。</string>
 </dict>
 </plist>

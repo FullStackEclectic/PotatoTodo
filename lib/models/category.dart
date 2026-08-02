@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+const Object _categoryCopyWithUnset = Object();
+
 class TaskCategory {
   final int? id;
   final String name;
@@ -46,26 +48,28 @@ class TaskCategory {
   }
 
   Map<String, dynamic> toJson() => toMap();
-  factory TaskCategory.fromJson(Map<String, dynamic> json) => TaskCategory.fromMap(json);
+  factory TaskCategory.fromJson(Map<String, dynamic> json) =>
+      TaskCategory.fromMap(json);
 
   // 创建TaskCategory的副本
   TaskCategory copyWith({
-    int? id,
+    Object? id = _categoryCopyWithUnset,
     String? name,
     Color? color,
     int? iconCodePoint,
-    int? parentId,
+    Object? parentId = _categoryCopyWithUnset,
     int? level,
     int? sortOrder,
   }) {
     return TaskCategory(
-      id: id ?? this.id,
+      id: id == _categoryCopyWithUnset ? this.id : id as int?,
       name: name ?? this.name,
       color: color ?? this.color,
       iconCodePoint: iconCodePoint ?? this.iconCodePoint,
-      parentId: parentId ?? this.parentId,
+      parentId:
+          parentId == _categoryCopyWithUnset ? this.parentId : parentId as int?,
       level: level ?? this.level,
       sortOrder: sortOrder ?? this.sortOrder,
     );
   }
-} 
+}

@@ -4,7 +4,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 class Animations {
   /// standard duration for page transitions
   static const Duration pageTransitionDuration = Duration(milliseconds: 300);
-  
+
   /// standard duration for list item animations
   static const Duration listAnimationDuration = Duration(milliseconds: 375);
 
@@ -30,9 +30,7 @@ class Animations {
             duration: listAnimationDuration,
             child: SlideAnimation(
               verticalOffset: 50.0,
-              child: FadeInAnimation(
-                child: itemBuilder(context, index),
-              ),
+              child: FadeInAnimation(child: itemBuilder(context, index)),
             ),
           );
         },
@@ -52,12 +50,11 @@ class Animations {
         crossAxisAlignment: crossAxisAlignment,
         children: AnimationConfiguration.toStaggeredList(
           duration: listAnimationDuration,
-          childAnimationBuilder: (widget) => SlideAnimation(
-            verticalOffset: 50.0,
-            child: FadeInAnimation(
-              child: widget,
-            ),
-          ),
+          childAnimationBuilder:
+              (widget) => SlideAnimation(
+                verticalOffset: 50.0,
+                child: FadeInAnimation(child: widget),
+              ),
           children: children,
         ),
       ),

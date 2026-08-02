@@ -17,10 +17,12 @@ class StatsWidgets {
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.5)),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.5),
+        ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -35,7 +37,7 @@ class StatsWidgets {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -53,12 +55,17 @@ class StatsWidgets {
             ),
           ),
           const SizedBox(height: 4),
-          Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -66,7 +73,10 @@ class StatsWidgets {
     );
   }
 
-  static Widget buildActivityTrendChart(BuildContext context, List<int> weeklyData) {
+  static Widget buildActivityTrendChart(
+    BuildContext context,
+    List<int> weeklyData,
+  ) {
     final theme = Theme.of(context);
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -75,18 +85,23 @@ class StatsWidgets {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: (weeklyData.reduce((curr, next) => curr > next ? curr : next) + 2).toDouble(),
+          maxY:
+              (weeklyData.reduce((curr, next) => curr > next ? curr : next) + 2)
+                  .toDouble(),
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => theme.colorScheme.surface,
-              tooltipRoundedRadius: 8,
+              tooltipBorderRadius: BorderRadius.circular(8),
               tooltipPadding: const EdgeInsets.all(8),
               tooltipMargin: 8,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 return BarTooltipItem(
                   '${weeklyData[groupIndex]} Tasks',
-                  TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                  TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 );
               },
             ),
@@ -102,7 +117,9 @@ class StatsWidgets {
                     child: Text(
                       days[value.toInt() % 7],
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -118,30 +135,41 @@ class StatsWidgets {
           ),
           gridData: FlGridData(show: false),
           borderData: FlBorderData(show: false),
-          barGroups: weeklyData.asMap().entries.map((entry) {
-            return BarChartGroupData(
-              x: entry.key,
-              barRods: [
-                BarChartRodData(
-                  toY: entry.value.toDouble(),
-                  color: theme.colorScheme.primary,
-                  width: 16,
-                  borderRadius: BorderRadius.circular(6),
-                  backDrawRodData: BackgroundBarChartRodData(
-                    show: true,
-                    toY: (weeklyData.reduce((curr, next) => curr > next ? curr : next) + 2).toDouble(),
-                    color: theme.colorScheme.primary.withOpacity(0.05),
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
+          barGroups:
+              weeklyData.asMap().entries.map((entry) {
+                return BarChartGroupData(
+                  x: entry.key,
+                  barRods: [
+                    BarChartRodData(
+                      toY: entry.value.toDouble(),
+                      color: theme.colorScheme.primary,
+                      width: 16,
+                      borderRadius: BorderRadius.circular(6),
+                      backDrawRodData: BackgroundBarChartRodData(
+                        show: true,
+                        toY:
+                            (weeklyData.reduce(
+                                      (curr, next) => curr > next ? curr : next,
+                                    ) +
+                                    2)
+                                .toDouble(),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.05,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
         ),
       ),
     );
   }
 
-  static Widget buildQuadrantPieChart(BuildContext context, Map<QuadrantType, int> data) {
+  static Widget buildQuadrantPieChart(
+    BuildContext context,
+    Map<QuadrantType, int> data,
+  ) {
     if (data.values.every((v) => v == 0)) {
       return Center(child: Text('No data yet'));
     }
@@ -152,19 +180,20 @@ class StatsWidgets {
         PieChartData(
           sectionsSpace: 2,
           centerSpaceRadius: 40,
-          sections: data.entries.map((e) {
-            return PieChartSectionData(
-              color: QuadrantConstants.getQuadrantColor(e.key),
-              value: e.value.toDouble(),
-              title: '${e.value}',
-              radius: 50,
-              titleStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            );
-          }).toList(),
+          sections:
+              data.entries.map((e) {
+                return PieChartSectionData(
+                  color: QuadrantConstants.getQuadrantColor(e.key),
+                  value: e.value.toDouble(),
+                  title: '${e.value}',
+                  radius: 50,
+                  titleStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                );
+              }).toList(),
         ),
       ),
     );
